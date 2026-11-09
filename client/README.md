@@ -18,5 +18,6 @@
 ## 状态
 
 - 2026-11-09：选型完成，见 `../files/client-plan-2026-11-09.md`
-- 阻塞：无真实节点（后端 nodes 为假测试数据，AlaVPS 待激活）；无 GitHub 仓库
-- 下一步：真实节点就绪后先用官方 SFA / sing-box.exe 手工验证订阅，再开工 fork 与 Tauri 工程
+- 2026-11-09：仓库已建 https://github.com/WZR-123456/zgltvpn-client；安卓端开工（`android` 分支）：SFA fork + 改名换标 + 登录一键连接 + Actions 出包，见 `android/README-ZGLTVPN.md`
+- 阻塞：无真实节点（后端 nodes 为假测试数据，AlaVPS 待激活）；等节点就绪后用现成 SFA / sing-box.exe 手工验证订阅，再真机测 ZGLTVPN 客户端
+- 下一步：等 Actions 首包编出后真机测试登录/订阅/连接；再做 Windows 端
