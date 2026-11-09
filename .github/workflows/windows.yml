@@ -1,0 +1,54 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [windows]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: windows/package-lock.json
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Download sing-box sidecar
+        shell: pwsh
+        run: |
+          $url = "https://github.com/SagerNet/sing-box/releases/download/v1.14.4/sing-box-1.14.4-windows-amd64.zip"
+          Invoke-WebRequest -Uri $url -OutFile sing-box.zip
+          Expand-Archive sing-box.zip -DestinationPath sing-box-tmp
+          New-Item -ItemType Directory -Force -Path src-tauri/binaries
+          Copy-Item sing-box-tmp/sing-box-1.14.4-windows-amd64/sing-box.exe src-tauri/binaries/sing-box-x86_64-pc-windows-msvc.exe
+          Get-Item src-tauri/binaries/sing-box-x86_64-pc-windows-msvc.exe | Select-Object Length, Name
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build with Tauri
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: windows
+          args: --target x86_64-pc-windows-msvc
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: zgltvpn-windows-installer
+          path: windows/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+          if-no-files-found: error

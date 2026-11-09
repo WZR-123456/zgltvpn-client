@@ -1,0 +1,74 @@
+{
+  "dns": {
+    "final": "dns-remote",
+    "rules": [
+      {
+        "domain_suffix": [
+          "localhost",
+          "local"
+        ],
+        "server": "dns-local"
+      }
+    ],
+    "servers": [
+      {
+        "address": "tls://8.8.8.8",
+        "detour": "proxy",
+        "tag": "dns-remote"
+      },
+      {
+        "address": "223.5.5.5",
+        "detour": "direct",
+        "tag": "dns-local"
+      }
+    ],
+    "strategy": "ipv4_only"
+  },
+  "experimental": {
+    "clash_api": {
+      "external_controller": "127.0.0.1:9090"
+    }
+  },
+  "inbounds": [
+    {
+      "address": "172.19.0.1/30",
+      "auto_route": true,
+      "interface_name": "tun0",
+      "sniff": true,
+      "stack": "system",
+      "strict_route": true,
+      "tag": "tun-in",
+      "type": "tun"
+    },
+    {
+      "listen": "127.0.0.1",
+      "listen_port": 10808,
+      "sniff": true,
+      "tag": "mixed-in",
+      "type": "mixed"
+    }
+  ],
+  "log": {
+    "level": "info"
+  },
+  "outbounds": [
+    {
+      "tag": "dns-out",
+      "type": "dns"
+    }
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "final": "proxy",
+    "rules": [
+      {
+        "outbound": "dns-out",
+        "protocol": "dns"
+      },
+      {
+        "ip_is_private": true,
+        "outbound": "direct"
+      }
+    ]
+  }
+}
