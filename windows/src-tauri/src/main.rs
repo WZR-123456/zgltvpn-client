@@ -52,11 +52,11 @@ fn emit_status(app: &AppHandle) {
             StatusPayload { running, node },
         );
         if let Some(tray) = app.tray_by_id("main") {
-            let _ = tray.set_tooltip(if running {
+            let _ = tray.set_tooltip(Some(if running {
                 "ZGLTVPN · 已连接"
             } else {
                 "ZGLTVPN · 未连接"
-            });
+            }));
         }
     }
 }
@@ -138,7 +138,7 @@ fn do_stop(app: &AppHandle) -> Result<(), String> {
         s.running = false;
         s.child.take()
     };
-    if let Some(mut child) = child {
+    if let Some(child) = child {
         let _ = child.kill();
     }
     let _ = proxy::disable_system_proxy();
@@ -149,7 +149,8 @@ fn do_stop(app: &AppHandle) -> Result<(), String> {
 fn do_toggle(app: &AppHandle) -> Result<(), String> {
     let running = {
         let state = app.state::<Mutex<VpnState>>();
-        state.lock().map_err(|e| e.to_string())?.running
+        let running = state.lock().map_err(|e| e.to_string())?.running;
+        running
     };
     if running {
         do_stop(app)
