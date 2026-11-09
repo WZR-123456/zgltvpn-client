@@ -131,7 +131,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
         with:
-          build-root-directory: android
           cache-provider: basic
       - name: Prepare signing
         run: |-
@@ -145,7 +144,7 @@ jobs:
           mkdir -p android/app/libs
           cp libbox.aar libbox-legacy.aar android/app/libs
           cd android
-          ./gradlew --build-cache --parallel :app:assembleOtherRelease
+          ./gradlew --build-cache --parallel --stacktrace :app:assembleOtherRelease
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       - name: Upload APKs
