@@ -3,14 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config.dart';
 import '../../core/providers.dart';
+import '../coming_soon/coming_soon_page.dart';
 import 'settings_controller.dart';
 
 /// Settings page (phase 3 §5.11), opened from the account tab.
 ///
-/// Every row is honest about what works: theme applies for real, the
-/// toggles are local preferences only (their features are not built
-/// yet), and update check is disabled — there is no version-check API,
-/// so no "already latest" result is fabricated.
+/// Every row is tappable and honest about what works: theme applies
+/// for real, the toggles are real local preferences persisted in
+/// SharedPreferences (their features take effect once the VPN /
+/// notification features land), and language / update check open an
+/// honest "即将上线" page — there is no version-check API, so no
+/// "already latest" result is fabricated.
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
@@ -41,16 +44,22 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(height: 16),
           _SectionHeader(label: '语言', textTheme: textTheme),
           _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text('语言', style: textTheme.titleSmall),
-                  trailing: Text('简体中文', style: textTheme.bodyMedium),
-                ),
-                Text('更多语言即将上线', style: textTheme.bodySmall),
-              ],
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text('语言', style: textTheme.titleSmall),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('简体中文', style: textTheme.bodyMedium),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+              onTap: () => openComingSoon(
+                context,
+                feature: '更多语言',
+                detail: '当前仅支持简体中文，更多语言在后续版本中上线。',
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -61,7 +70,10 @@ class SettingsPage extends ConsumerWidget {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text('自动连接', style: textTheme.titleSmall),
-                  subtitle: Text('VPN 连接功能上线后生效', style: textTheme.bodySmall),
+                  subtitle: Text(
+                    '偏好已保存，连接功能上线后自动连接',
+                    style: textTheme.bodySmall,
+                  ),
                   value: settings.autoConnect,
                   onChanged: (value) => notifier.setAutoConnect(value),
                 ),
@@ -69,7 +81,7 @@ class SettingsPage extends ConsumerWidget {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text('订阅自动刷新', style: textTheme.titleSmall),
-                  subtitle: Text('上线后自动刷新订阅', style: textTheme.bodySmall),
+                  subtitle: Text('偏好已保存，上线后自动刷新订阅', style: textTheme.bodySmall),
                   value: settings.autoRefreshSubscription,
                   onChanged: (value) =>
                       notifier.setAutoRefreshSubscription(value),
@@ -83,7 +95,7 @@ class SettingsPage extends ConsumerWidget {
             child: SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text('通知', style: textTheme.titleSmall),
-              subtitle: Text('通知功能上线后生效', style: textTheme.bodySmall),
+              subtitle: Text('偏好已保存，通知功能上线后生效', style: textTheme.bodySmall),
               value: settings.notificationsEnabled,
               onChanged: (value) => notifier.setNotificationsEnabled(value),
             ),
@@ -110,10 +122,13 @@ class SettingsPage extends ConsumerWidget {
                 const Divider(height: 1),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  enabled: false,
                   title: Text('检查更新', style: textTheme.titleSmall),
-                  trailing: Text('即将上线', style: textTheme.bodySmall),
-                  onTap: null,
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => openComingSoon(
+                    context,
+                    feature: '检查更新',
+                    detail: '当前版本没有版本检查接口，无法确认是否为最新版本。',
+                  ),
                 ),
               ],
             ),

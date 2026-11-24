@@ -175,15 +175,23 @@ void main() {
       expect(find.text('浅色'), findsOneWidget);
       expect(find.text('深色'), findsOneWidget);
       expect(find.text('简体中文'), findsOneWidget);
-      expect(find.text('更多语言即将上线'), findsOneWidget);
-      expect(find.text('VPN 连接功能上线后生效'), findsOneWidget);
-      expect(find.text('上线后自动刷新订阅'), findsOneWidget);
-      expect(find.text('通知功能上线后生效'), findsOneWidget);
+      expect(find.text('更多语言即将上线'), findsNothing);
+      // The toggles persist for real; the subtitles say the preference
+      // is saved and takes effect once the feature lands.
+      expect(find.text('偏好已保存，连接功能上线后自动连接'), findsOneWidget);
+      expect(find.text('偏好已保存，上线后自动刷新订阅'), findsOneWidget);
+      expect(find.text('偏好已保存，通知功能上线后生效'), findsOneWidget);
       expect(find.text('ZGLTVPN'), findsOneWidget);
       expect(find.text(ApiConfig.clientVersion), findsOneWidget);
-      // No fabricated "already latest" result: update check is disabled.
+      // No fabricated "already latest" result: update check is tappable
+      // and opens an honest coming-soon page instead.
       expect(find.text('检查更新'), findsOneWidget);
-      expect(find.text('即将上线'), findsWidgets);
+      expect(find.text('即将上线'), findsNothing);
+
+      await tester.tap(find.text('检查更新'));
+      await tester.pumpAndSettle();
+      expect(find.text('检查更新即将上线'), findsOneWidget);
+      expect(find.textContaining('已是最新'), findsNothing);
     });
 
     testWidgets('tapping a theme persists it and marks it selected', (

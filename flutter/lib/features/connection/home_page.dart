@@ -6,6 +6,7 @@ import '../../core/providers.dart';
 import '../../core/theme.dart';
 import '../../core/utils/format.dart';
 import '../account/account_page.dart';
+import '../coming_soon/coming_soon_page.dart';
 import '../membership/membership_page.dart';
 import '../servers/servers_page.dart';
 import 'home_controller.dart';
@@ -13,10 +14,10 @@ import 'home_controller.dart';
 /// Home shell (phase 3 §5.1 + the Android home mockup).
 ///
 /// All data comes from real API calls (`/api/me`, `/api/nodes`, subscription
-/// fetch+merge). Anything not yet built is shown disabled with its reason —
-/// nothing is faked: no fake speeds, no fake latency, no fake "connected".
-/// The connect button stays disabled until the Phase 2.5 prototype wires
-/// the real VPN core.
+/// fetch+merge). Nothing is faked: no fake speeds, no fake latency, no fake
+/// "connected". Every not-yet-built action is tappable and opens an honest
+/// "即将上线" page naming the feature — the connect button never pretends
+/// to connect (the real VPN core lands with the Phase 2.5 prototype).
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -96,11 +97,9 @@ class _HomePageState extends ConsumerState<HomePage> {
         0 => _buildHome(context, home),
         1 => const ServersPage(),
         2 => const MembershipPage(),
+        3 => const ComingSoonBody(feature: '消息中心', detail: '站内信与通知功能即将上线。'),
         4 => const AccountPage(),
-        _ => _ComingSoonPage(
-          label: _tabs[_tabIndex].label,
-          icon: _tabs[_tabIndex].icon,
-        ),
+        _ => const ComingSoonBody(feature: '消息中心'),
       },
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _tabIndex,
@@ -323,8 +322,9 @@ List<Widget> _withDividers(List<Widget> rows) {
 
 /// Connect card: 96dp round button + state + current node.
 ///
-/// The button is disabled until the Phase 2.5 prototype wires the real VPN
-/// core — it must never pretend to connect.
+/// The button is tappable but never pretends to connect: it opens an
+/// honest "即将上线" page until the Phase 2.5 prototype wires the real
+/// VPN core.
 class _ConnectCard extends StatelessWidget {
   const _ConnectCard({required this.home});
 
@@ -346,7 +346,13 @@ class _ConnectCard extends StatelessWidget {
             width: 96,
             height: 96,
             child: ElevatedButton(
-              onPressed: null,
+              onPressed: () => openComingSoon(
+                context,
+                feature: 'VPN 连接',
+                detail:
+                    '连接功能需接入真实 VPN 核心（阶段 2.5 原型），'
+                    '当前版本不会假装连接。',
+              ),
               style: ElevatedButton.styleFrom(
                 shape: const CircleBorder(),
                 padding: EdgeInsets.zero,
@@ -576,12 +582,15 @@ class _MembershipCard extends StatelessWidget {
             _kvRow(context, '状态', _PlanBadge(expired: expired, days: days)),
           ]),
           const SizedBox(height: 10),
-          ElevatedButton(onPressed: null, child: const Text('续订套餐')),
-          const SizedBox(height: 6),
-          Text(
-            '购买与续订功能即将上线',
-            style: textTheme.bodySmall,
-            textAlign: TextAlign.center,
+          ElevatedButton(
+            onPressed: () => openComingSoon(
+              context,
+              feature: '购买与续订',
+              detail:
+                  '套餐购买与续订功能即将上线，届时可在应用内用余额购买；'
+                  '当前请在网站上购买。',
+            ),
+            child: const Text('续订套餐'),
           ),
         ],
       ),
@@ -625,8 +634,8 @@ class _PlanBadge extends StatelessWidget {
 }
 
 /// Quick actions row. 服务器 switches to the servers tab and 刷新订阅
-/// refreshes the subscription; 测速 and 客服 are visibly disabled with
-/// an "即将上线" label.
+/// refreshes the subscription; 测速 and 客服 are tappable and open an
+/// honest "即将上线" page — nothing here is disabled any more.
 class _QuickActions extends StatelessWidget {
   const _QuickActions({
     required this.onServers,
@@ -643,20 +652,34 @@ class _QuickActions extends StatelessWidget {
         _QuickAction(
           icon: Icons.dns_outlined,
           label: '服务器',
-          enabled: true,
           onTap: () async => onServers(),
         ),
         const SizedBox(width: 8),
-        _QuickAction(icon: Icons.speed_outlined, label: '测速', enabled: false),
+        _QuickAction(
+          icon: Icons.speed_outlined,
+          label: '测速',
+          onTap: () async => openComingSoon(
+            context,
+            feature: '测速',
+            detail: '节点测速功能即将上线，当前不显示任何测速结果。',
+          ),
+        ),
         const SizedBox(width: 8),
         _QuickAction(
           icon: Icons.refresh_outlined,
           label: '刷新订阅',
-          enabled: true,
           onTap: onRefreshSubscription,
         ),
         const SizedBox(width: 8),
-        _QuickAction(icon: Icons.headset_outlined, label: '客服', enabled: false),
+        _QuickAction(
+          icon: Icons.headset_outlined,
+          label: '客服',
+          onTap: () async => openComingSoon(
+            context,
+            feature: '客服中心',
+            detail: '客服中心即将上线，可提交工单与查看回复。',
+          ),
+        ),
       ],
     );
   }
@@ -666,28 +689,18 @@ class _QuickAction extends StatelessWidget {
   const _QuickAction({
     required this.icon,
     required this.label,
-    required this.enabled,
-    this.onTap,
+    required this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final bool enabled;
-  final Future<void> Function()? onTap;
+  final Future<void> Function() onTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final extra = Theme.of(context).extension<ZgltExtraColors>()!;
-    final content = Column(
-      children: [
-        Icon(icon, size: 20, color: scheme.primary),
-        const SizedBox(height: 6),
-        Text(label, style: textTheme.bodySmall?.copyWith(color: extra.text2)),
-        if (!enabled) Text('即将上线', style: textTheme.labelSmall),
-      ],
-    );
     final box = Container(
       decoration: BoxDecoration(
         color: scheme.surface,
@@ -695,45 +708,24 @@ class _QuickAction extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-      child: Center(child: content),
-    );
-    return Expanded(
-      child: Opacity(
-        opacity: enabled ? 1 : 0.55,
-        child: onTap == null
-            ? box
-            : InkWell(
-                onTap: () => onTap!(),
-                borderRadius: BorderRadius.circular(12),
-                child: box,
-              ),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: scheme.primary),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: textTheme.bodySmall?.copyWith(color: extra.text2),
+            ),
+          ],
+        ),
       ),
     );
-  }
-}
-
-/// Placeholder page for tabs that land in later slices (消息 only, now
-/// that 服务器 / 会员 / 我的 are wired in slice 2).
-class _ComingSoonPage extends StatelessWidget {
-  const _ComingSoonPage({required this.label, required this.icon});
-
-  final String label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 48, color: extra.text3),
-          const SizedBox(height: 12),
-          Text('$label即将上线', style: textTheme.bodyMedium),
-          const SizedBox(height: 4),
-          Text('该功能在后续切片中上线', style: textTheme.bodySmall),
-        ],
+    return Expanded(
+      child: InkWell(
+        onTap: () => onTap(),
+        borderRadius: BorderRadius.circular(12),
+        child: box,
       ),
     );
   }

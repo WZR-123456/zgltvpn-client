@@ -273,7 +273,7 @@ void main() {
       expect(find.text('延迟为服务端 TCP 检测结果'), findsOneWidget);
     });
 
-    testWidgets('tapping a row opens the detail sheet, switch disabled', (
+    testWidgets('tapping a row opens the detail sheet, switch is honest', (
       tester,
     ) async {
       final fake = FakeCatalogApi(
@@ -296,11 +296,16 @@ void main() {
 
       expect(find.text('43.103.2.53'), findsOneWidget);
       expect(find.text('切换到该节点'), findsOneWidget);
-      expect(find.text('节点切换随 VPN 连接功能上线'), findsOneWidget);
       final button = tester.widget<ElevatedButton>(
         find.widgetWithText(ElevatedButton, '切换到该节点'),
       );
-      expect(button.onPressed, isNull);
+      // Tappable now — but it never pretends a switch happened.
+      expect(button.onPressed, isNotNull);
+
+      await tester.tap(find.text('切换到该节点'));
+      await tester.pumpAndSettle();
+      expect(find.text('节点切换即将上线'), findsOneWidget);
+      expect(find.textContaining('切换成功'), findsNothing);
     });
 
     testWidgets('dark theme: node rows use the dark surface, not light', (

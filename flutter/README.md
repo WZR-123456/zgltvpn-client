@@ -4,6 +4,27 @@ Flutter rewrite of the ZGLTVPN Android client (NORTH project, Phase 4).
 Brand: **ZGLTVPN** (中国联通境外VPN). NORTH is only the internal project
 codename.
 
+## Status (unlock — 2026-11-24)
+
+- [x] Unlock all restrictions (Maya's order 2026-11-24 23:01): every
+      previously-disabled control is tappable. Local preferences
+      (theme, auto-connect, subscription auto-refresh, notifications)
+      persist for real in SharedPreferences; backend-dependent actions
+      open an honest "即将上线" page naming the feature — connect,
+      purchase/renew, node switch, speed test, support, messages,
+      invite-link sharing, workspace / devices / security, more
+      languages, update check. Nothing is faked: no fake connect
+      state, no fake purchase, no fake update result.
+- [x] Orders wired for real: 我的订单 opens the user's own orders
+      from GET /api/u/orders (backend v11, newest first, max 50),
+      with loading / error+retry / empty states; invite section shows
+      the real invite counts and rebate earned from /api/me.
+- [ ] Real VPN tunnel — lands with the Phase 2.5 prototype
+      (`sing_box` plugin adapter for the `VpnService` interface)
+- [ ] Purchase / renewal, messages, node switching, invite-link
+      sharing, workspace / devices / security / support (later
+      Phase 4 slices — the honest coming-soon pages name them)
+
 ## Status (slice 3 — 2026-11-24)
 
 - [x] Settings page (phase 3 §5.11): theme light/dark/follow-system

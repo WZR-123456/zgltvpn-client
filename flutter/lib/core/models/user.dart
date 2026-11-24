@@ -17,6 +17,9 @@ class User {
     this.planId,
     this.planName,
     this.totpEnabled = false,
+    this.inviteCount = 0,
+    this.invitePaidCount = 0,
+    this.rebateEarned = 0,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -38,6 +41,9 @@ class User {
       planId: json['plan_id'] as String?,
       planName: json['plan_name'] as String?,
       totpEnabled: json['totp_enabled'] as bool? ?? false,
+      inviteCount: (json['invite_count'] as num?)?.toInt() ?? 0,
+      invitePaidCount: (json['invite_paid_count'] as num?)?.toInt() ?? 0,
+      rebateEarned: _toDouble(json['rebate_earned']),
     );
   }
 
@@ -68,6 +74,15 @@ class User {
   final String? planId;
   final String? planName;
   final bool totpEnabled;
+
+  /// People who registered with this user as inviter (from /api/me).
+  final int inviteCount;
+
+  /// Of those, how many have bought a plan (from /api/me).
+  final int invitePaidCount;
+
+  /// Total invite rebate earned, CNY (from /api/me).
+  final double rebateEarned;
 
   bool get hasActivePlan => expires > 0;
 

@@ -4,14 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/node.dart';
 import '../../core/theme.dart';
 import '../../core/utils/format.dart';
+import '../coming_soon/coming_soon_page.dart';
 import 'servers_controller.dart';
 
 /// Servers page (phase 3 §5.2): search + node list grouped by region.
 ///
-/// All data comes from the public catalog API. Anything not yet built is
-/// shown disabled with its reason — nothing is faked: no favorites/recent
-/// segments (no persistence layer yet), and node switching is disabled
-/// until the VPN connection feature lands.
+/// All data comes from the public catalog API. Nothing is faked: no
+/// favorites/recent segments (no persistence layer yet), and node
+/// switching is tappable but opens an honest "即将上线" page until the
+/// VPN connection feature lands — it never pretends a switch happened.
+/// Nodes the server reports as disabled stay greyed and untappable:
+/// that is real server state, not a lock.
 class ServersPage extends ConsumerStatefulWidget {
   const ServersPage({super.key});
 
@@ -408,8 +411,9 @@ class _StatusBadge extends StatelessWidget {
 
 /// Node detail bottom sheet (§5.2): details + latency + switch button.
 ///
-/// The switch button is disabled until the VPN connection feature lands —
-/// it must never pretend a switch happened.
+/// The switch button is tappable but opens an honest "即将上线" page
+/// until the VPN connection feature lands — it never pretends a switch
+/// happened.
 Future<void> _showNodeSheet(
   BuildContext context,
   Node node,
@@ -461,12 +465,14 @@ Future<void> _showNodeSheet(
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: null,
+                onPressed: () => openComingSoon(
+                  context,
+                  feature: '节点切换',
+                  detail: '节点切换随 VPN 连接功能上线，当前不会假装已切换。',
+                ),
                 child: const Text('切换到该节点'),
               ),
             ),
-            const SizedBox(height: 8),
-            Center(child: Text('节点切换随 VPN 连接功能上线', style: textTheme.bodySmall)),
           ],
         ),
       ),

@@ -309,7 +309,7 @@ void main() {
         home: home,
       );
       expect(find.text('暂无生效套餐'), findsOneWidget);
-      expect(find.text('购买与续订功能即将上线'), findsWidgets);
+      expect(find.text('去购买套餐'), findsOneWidget);
     });
 
     testWidgets('error state shows offline banner and retry works', (
@@ -330,18 +330,22 @@ void main() {
       expect(catalog.loadCalls, 2);
     });
 
-    testWidgets('buy buttons are disabled with the coming-soon note', (
-      tester,
-    ) async {
+    testWidgets('buy buttons open the honest coming-soon page', (tester) async {
       final home = await makeHomeController(makeUser());
       await pumpMembership(
         tester,
         catalog: FakeCatalogApi(testPlans),
         home: home,
       );
-      expect(find.text('购买与续订功能即将上线'), findsWidgets);
       expect(find.text('我的订单'), findsOneWidget);
-      expect(find.text('即将上线'), findsWidgets);
+      expect(find.text('即将上线'), findsNothing);
+
+      // The plan-card buy button: tappable, but no order is placed —
+      // it opens the coming-soon page naming the feature.
+      await tester.tap(find.text('购买').first);
+      await tester.pumpAndSettle();
+      expect(find.text('购买与续订即将上线'), findsOneWidget);
+      expect(find.textContaining('已购买'), findsNothing);
     });
 
     testWidgets(

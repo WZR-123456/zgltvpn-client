@@ -6,15 +6,18 @@ import '../../core/models/user.dart';
 import '../../core/providers.dart';
 import '../../core/theme.dart';
 import '../../core/utils/format.dart';
+import '../coming_soon/coming_soon_page.dart';
 import 'membership_controller.dart';
+import 'orders_page.dart';
 
 /// Membership page (phase 3 §5.7): current plan + plan list.
 ///
 /// All data is real: the current plan comes from the watched
 /// [homeControllerProvider] user (`/api/me`), the plan list from
-/// [membershipControllerProvider] (`/api/plans`). Purchase/renewal is
-/// not built yet, so every buy button is disabled with the reason
-/// shown — nothing is faked.
+/// [membershipControllerProvider] (`/api/plans`), and the orders list
+/// from GET /api/u/orders. Purchase/renewal is not built yet, so every
+/// buy button is tappable and opens an honest "即将上线" page naming
+/// the feature — nothing is faked, and no purchase is ever charged.
 class MembershipPage extends ConsumerWidget {
   const MembershipPage({super.key});
 
@@ -71,12 +74,6 @@ class MembershipPage extends ConsumerWidget {
                   ),
                 ),
               ),
-            const SizedBox(height: 4),
-            Text(
-              '购买与续订功能即将上线',
-              style: textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
             const SizedBox(height: 12),
             _Card(
               child: Column(
@@ -92,11 +89,12 @@ class MembershipPage extends ConsumerWidget {
             _Card(
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
-                enabled: false,
                 leading: const Icon(Icons.receipt_long_outlined),
                 title: Text('我的订单', style: textTheme.titleSmall),
-                trailing: Text('即将上线', style: textTheme.bodySmall),
-                onTap: null,
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const OrdersPage())),
               ),
             ),
           ],
@@ -248,9 +246,16 @@ class _CurrentPlanCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text('暂无生效套餐', style: textTheme.bodyMedium),
             const SizedBox(height: 10),
-            const ElevatedButton(onPressed: null, child: Text('去购买套餐')),
-            const SizedBox(height: 6),
-            Text('购买与续订功能即将上线', style: textTheme.bodySmall),
+            ElevatedButton(
+              onPressed: () => openComingSoon(
+                context,
+                feature: '购买与续订',
+                detail:
+                    '套餐购买与续订功能即将上线，届时可在应用内用余额购买；'
+                    '当前请在网站上购买。',
+              ),
+              child: const Text('去购买套餐'),
+            ),
             if (offline) ...[
               const SizedBox(height: 6),
               Text('无网络，显示的是缓存数据', style: textTheme.bodySmall),
@@ -295,9 +300,16 @@ class _CurrentPlanCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 10),
-          const ElevatedButton(onPressed: null, child: Text('续订套餐')),
-          const SizedBox(height: 6),
-          Text('购买与续订功能即将上线', style: textTheme.bodySmall),
+          ElevatedButton(
+            onPressed: () => openComingSoon(
+              context,
+              feature: '购买与续订',
+              detail:
+                  '套餐购买与续订功能即将上线，届时可在应用内用余额购买；'
+                  '当前请在网站上购买。',
+            ),
+            child: const Text('续订套餐'),
+          ),
         ],
       ),
     );
@@ -400,8 +412,9 @@ class _PeriodSegment extends StatelessWidget {
 /// One sellable plan: name + kind badge + traffic + price for the
 /// selected period. Tapping the card expands it to show the plan detail
 /// (all three period prices, traffic, device limit, speed limit, nodes);
-/// a second tap collapses it. The buy button is disabled — purchase is
-/// not built yet (a plan with no price for the period shows "—").
+/// a second tap collapses it. The buy button is tappable and opens an
+/// honest "即将上线" page — purchase is not built yet, so no order is
+/// ever placed (a plan with no price for the period shows "—").
 /// Missing detail fields show "—", never a made-up value.
 class _PlanCard extends StatefulWidget {
   const _PlanCard({required this.plan, required this.period});
@@ -475,7 +488,13 @@ class _PlanCardState extends State<_PlanCard> {
                 // 48 height matches the theme, the 64 width is Flutter's
                 // default button minimum.
                 ElevatedButton(
-                  onPressed: null,
+                  onPressed: () => openComingSoon(
+                    context,
+                    feature: '购买与续订',
+                    detail:
+                        '“${plan.name}”的购买功能即将上线，届时可在应用内'
+                        '用余额购买；当前请在网站上购买。',
+                  ),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(64, 48),
                   ),

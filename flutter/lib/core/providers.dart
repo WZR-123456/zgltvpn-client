@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api/api_client.dart';
 import 'api/auth_api.dart';
 import 'api/catalog_api.dart';
+import 'api/orders_api.dart';
 import 'api/subscription_api.dart';
 import 'config/template_loader.dart';
 import 'storage/secure_storage.dart';
@@ -24,6 +25,11 @@ final authApiProvider = Provider<AuthApi>(
 
 final catalogApiProvider = Provider<CatalogApi>(
   (ref) => CatalogApi(ref.watch(apiClientProvider)),
+);
+
+/// Orders API: GET /api/u/orders (backend v11, logged-in user only).
+final ordersApiProvider = Provider<OrdersApi>(
+  (ref) => OrdersApi(ref.watch(apiClientProvider)),
 );
 
 final templateLoaderProvider = Provider<TemplateLoader>(

@@ -67,7 +67,12 @@ class FakeCatalogApi extends CatalogApi {
   Future<List<Node>> nodes() async => const <Node>[];
 }
 
-User makeUser({double balance = 12.5}) {
+User makeUser({
+  double balance = 12.5,
+  int inviteCount = 0,
+  int invitePaidCount = 0,
+  double rebateEarned = 0,
+}) {
   return User(
     email: 'test@test.com',
     name: '测试用户',
@@ -81,6 +86,9 @@ User makeUser({double balance = 12.5}) {
     subToken: 'sub-token',
     planId: 'p1',
     planName: '新人',
+    inviteCount: inviteCount,
+    invitePaidCount: invitePaidCount,
+    rebateEarned: rebateEarned,
   );
 }
 
@@ -135,7 +143,7 @@ void main() {
       expect(find.text('¥12.50'), findsOneWidget);
     });
 
-    testWidgets('entries are disabled with the coming-soon note', (
+    testWidgets('entries are tappable and open coming-soon pages', (
       tester,
     ) async {
       final home = makeHomeController(authApi: FakeAuthApi(makeUser()));
@@ -145,8 +153,14 @@ void main() {
       for (final label in ['工作空间', '设备管理', '安全中心', '客服中心']) {
         expect(find.text(label), findsOneWidget);
       }
-      expect(find.text('即将上线'), findsWidgets);
+      // Nothing on the page itself is labelled "即将上线" any more:
+      // the rows are tappable and the note lives on the page they open.
+      expect(find.text('即将上线'), findsNothing);
       expect(find.text('退出登录'), findsOneWidget);
+
+      await tester.tap(find.text('工作空间'));
+      await tester.pumpAndSettle();
+      expect(find.text('工作空间即将上线'), findsOneWidget);
     });
 
     testWidgets('tapping settings opens the settings page', (tester) async {
@@ -165,17 +179,28 @@ void main() {
       expect(find.byType(BackButton), findsOneWidget);
     });
 
-    testWidgets('invite section shows coming soon and no code or link', (
+    testWidgets('invite section shows real stats, no code or link', (
       tester,
     ) async {
-      final home = makeHomeController(authApi: FakeAuthApi(makeUser()));
+      final home = makeHomeController(
+        authApi: FakeAuthApi(
+          makeUser(inviteCount: 3, invitePaidCount: 1, rebateEarned: 5),
+        ),
+      );
       await home.refresh();
       await pumpAccount(tester, home: home);
 
-      expect(find.text('邀请功能即将上线'), findsOneWidget);
-      expect(find.text('暂无邀请记录'), findsOneWidget);
+      // Real numbers from /api/me — never a fabricated code or link.
+      expect(find.text('已邀请 3 人'), findsOneWidget);
+      expect(find.text('其中 1 人已购买 · 累计返利 ¥5'), findsOneWidget);
+      expect(find.text('邀请链接分享即将上线'), findsOneWidget);
       expect(find.textContaining('邀请码'), findsNothing);
-      expect(find.textContaining('邀请链接'), findsNothing);
+      expect(find.textContaining('邀请链接'), findsOneWidget);
+
+      // Tapping the card opens the honest coming-soon page.
+      await tester.tap(find.text('邀请好友'));
+      await tester.pumpAndSettle();
+      expect(find.text('邀请好友即将上线'), findsOneWidget);
     });
 
     testWidgets('offline marks the balance as cached data', (tester) async {

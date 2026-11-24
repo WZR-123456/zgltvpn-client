@@ -4,18 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/user.dart';
 import '../../core/providers.dart';
 import '../../core/theme.dart';
+import '../coming_soon/coming_soon_page.dart';
 import '../settings/settings_page.dart';
 
 /// Personal center ("我的", phase 3 §5.14): account card, invite
 /// section, entry list, logout.
 ///
 /// All data is real, from the watched [homeControllerProvider] user
-/// (`/api/me`). There is no invite code in the user model, so the
-/// invite section shows "即将上线" and no code or link is fabricated.
-/// The entry rows lead to pages that land in later slices, so they are
-/// disabled with the reason shown. Logout clears the local session;
-/// [app.dart] routes back to the login page when the auth state flips
-/// to logged-out.
+/// (`/api/me`): the invite section shows the real invite counts and
+/// rebate earned, and no invite code or link is fabricated — link
+/// sharing is not built yet, so the card opens an honest "即将上线"
+/// page. The entry rows open honest "即将上线" pages for their
+/// features. Logout clears the local session; [app.dart] routes back
+/// to the login page when the auth state flips to logged-out.
 class AccountPage extends ConsumerWidget {
   const AccountPage({super.key});
 
@@ -47,21 +48,50 @@ class AccountPage extends ConsumerWidget {
           ] else ...[
             _AccountCard(user: home.user, offline: home.offline),
             const SizedBox(height: 12),
-            const _InviteCard(),
+            _InviteCard(user: home.user),
             const SizedBox(height: 12),
             _Card(
               child: Column(
                 children: [
-                  _DisabledEntry(
+                  _Entry(
                     icon: Icons.workspaces_outlined,
                     label: '工作空间',
+                    onTap: () => openComingSoon(
+                      context,
+                      feature: '工作空间',
+                      detail: '工作空间功能即将上线。',
+                    ),
                   ),
                   Divider(height: 1),
-                  _DisabledEntry(icon: Icons.devices_outlined, label: '设备管理'),
+                  _Entry(
+                    icon: Icons.devices_outlined,
+                    label: '设备管理',
+                    onTap: () => openComingSoon(
+                      context,
+                      feature: '设备管理',
+                      detail: '设备管理即将上线，可查看与管理已登录设备。',
+                    ),
+                  ),
                   Divider(height: 1),
-                  _DisabledEntry(icon: Icons.shield_outlined, label: '安全中心'),
+                  _Entry(
+                    icon: Icons.shield_outlined,
+                    label: '安全中心',
+                    onTap: () => openComingSoon(
+                      context,
+                      feature: '安全中心',
+                      detail: '安全中心即将上线，可管理两步验证等安全设置。',
+                    ),
+                  ),
                   Divider(height: 1),
-                  _DisabledEntry(icon: Icons.headset_outlined, label: '客服中心'),
+                  _Entry(
+                    icon: Icons.headset_outlined,
+                    label: '客服中心',
+                    onTap: () => openComingSoon(
+                      context,
+                      feature: '客服中心',
+                      detail: '客服中心即将上线，可提交工单与查看回复。',
+                    ),
+                  ),
                   Divider(height: 1),
                   _Entry(
                     icon: Icons.settings_outlined,
@@ -293,46 +323,60 @@ class _AccountCard extends StatelessWidget {
   }
 }
 
-/// Invite section. No invite code exists in the user model, so none is
-/// shown — the feature is marked "即将上线" instead of faking one.
+/// Invite section. The counts and rebate come from /api/me and are
+/// shown as stored — no invite code or link is fabricated, because
+/// link sharing is not built yet. Tapping the card opens an honest
+/// "即将上线" page for invite-link sharing.
 class _InviteCard extends StatelessWidget {
-  const _InviteCard();
+  const _InviteCard({required this.user});
+
+  final User? user;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final current = user;
     return _Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('邀请好友', style: textTheme.titleMedium),
-              Container(
-                height: 20,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                alignment: Alignment.center,
-                child: Text('即将上线', style: textTheme.labelSmall),
+      child: InkWell(
+        onTap: () => openComingSoon(
+          context,
+          feature: '邀请好友',
+          detail: '邀请链接分享功能即将上线，当前不展示邀请码或链接。',
+        ),
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('邀请好友', style: textTheme.titleMedium),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+            const SizedBox(height: 6),
+            if (current == null) ...[
+              Text('暂无数据', style: textTheme.bodyMedium),
+            ] else ...[
+              Text('已邀请 ${current.inviteCount} 人', style: textTheme.bodyMedium),
+              const SizedBox(height: 2),
+              Text(
+                '其中 ${current.invitePaidCount} 人已购买 · '
+                '累计返利 ¥${current.rebateEarned == current.rebateEarned.truncateToDouble() ? current.rebateEarned.toInt() : current.rebateEarned.toStringAsFixed(2)}',
+                style: textTheme.bodySmall,
               ),
+              const SizedBox(height: 6),
+              Text('邀请链接分享即将上线', style: textTheme.bodySmall),
             ],
-          ),
-          const SizedBox(height: 6),
-          Text('邀请功能即将上线', style: textTheme.bodySmall),
-          const SizedBox(height: 6),
-          Text('暂无邀请记录', style: textTheme.bodySmall),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-/// An entry that opens a page (settings, slice 3).
+/// An entry that opens a page (settings, slice 3; the other entries
+/// open honest "即将上线" pages until their features land).
 class _Entry extends StatelessWidget {
   const _Entry({required this.icon, required this.label, required this.onTap});
 
@@ -349,27 +393,6 @@ class _Entry extends StatelessWidget {
       title: Text(label, style: textTheme.titleSmall),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
-    );
-  }
-}
-
-/// An entry whose page lands in a later slice: visibly disabled.
-class _DisabledEntry extends StatelessWidget {
-  const _DisabledEntry({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      enabled: false,
-      leading: Icon(icon),
-      title: Text(label, style: textTheme.titleSmall),
-      trailing: Text('即将上线', style: textTheme.bodySmall),
-      onTap: null,
     );
   }
 }
