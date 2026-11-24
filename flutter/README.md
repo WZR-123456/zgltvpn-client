@@ -4,6 +4,27 @@ Flutter rewrite of the ZGLTVPN Android client (NORTH project, Phase 4).
 Brand: **ZGLTVPN** (中国联通境外VPN). NORTH is only the internal project
 codename.
 
+## Status (slice 2 — 2026-11-24)
+
+- [x] Servers page (search + region-grouped node list from `/api/nodes` +
+      `/api/nodestatus`, offline cache + retry; node switching disabled
+      until the VPN connection feature lands)
+- [x] Membership page (current plan from `/api/me` + plan list from
+      `/api/plans`, 月/季/年 price switch, expiry reminder; all buy/renew
+      buttons disabled — purchase not built yet)
+- [x] Account page ("我的": account card, invite section, 5 disabled
+      entries, logout)
+- [x] Bottom tabs wired: 服务器 / 会员 / 我的 open the new pages; 消息
+      still the coming-soon placeholder. Home quick-action 服务器 now
+      switches to the servers tab
+- [x] API base URL switched to `https://cn.521com.xyz` (custom domain
+      active since 2026-11-24)
+- [ ] Real VPN tunnel — lands with the Phase 2.5 prototype
+      (`sing_box` plugin adapter for the `VpnService` interface)
+- [ ] Purchase / renewal, orders, messages, node switching, invite,
+      workspace / devices / security / support / settings
+      (later Phase 4 slices)
+
 ## Status (slice 1 — 2026-11-24)
 
 - [x] Flutter scaffold (Riverpod 2.x, `flutter_secure_storage`, `sing_box`
@@ -18,7 +39,8 @@ codename.
 - [ ] Real VPN tunnel — lands with the Phase 2.5 prototype
       (`sing_box` plugin adapter for the `VpnService` interface)
 - [ ] Plans / purchase / orders / messages / tickets / settings
-      (later Phase 4 slices)
+      (later Phase 4 slices — purchase, orders and messages still open
+      after slice 2; plans list itself landed in slice 2)
 
 ## Structure
 
@@ -38,7 +60,10 @@ lib/
 │   └── utils/                 # Format (bytes, expiry, dirty-data clamp)
 ├── features/
 │   ├── auth/                  # login page + AuthController
-│   └── connection/            # home shell + HomeController
+│   ├── connection/            # home shell + HomeController
+│   ├── servers/               # servers page + ServersController (slice 2)
+│   ├── membership/            # membership page + MembershipController (slice 2)
+│   └── account/               # account page (slice 2)
 └── platform/
     └── vpn/                   # plugin-agnostic VpnService interface + stub
 assets/
@@ -46,7 +71,10 @@ assets/
 test/
 ├── merge_config_test.dart     # golden tests for the merge (incl. real asset)
 ├── userinfo_test.dart
-└── format_test.dart
+├── format_test.dart
+├── servers_test.dart          # slice 2: servers controller + page
+├── membership_test.dart       # slice 2: membership controller + page
+└── account_test.dart          # slice 2: account page
 ```
 
 ## Run / build
@@ -77,9 +105,9 @@ Minimum Android: API 24 (Android 7.0).
   (`ANDROID_KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`,
   `KEY_PASSWORD` — KEY_PASSWORD must equal the store password). Slice 1 CI
   builds debug APKs only; the release job is added with the release build.
-- **API base URL** lives only in `lib/core/config.dart` (currently
-  `https://vpn.zgltvpn.workers.dev`; switch to `https://cn.521com.xyz`
-  once the custom domain is active).
+- **API base URL** lives only in `lib/core/config.dart` (now
+  `https://cn.521com.xyz`, switched in slice 2 when the custom domain
+  went active).
 - **No fake data**: connection state, latency, traffic and IP are shown only
   from real measurements or real API responses; otherwise "暂无数据".
 

@@ -5,6 +5,9 @@ import '../../core/models/user.dart';
 import '../../core/providers.dart';
 import '../../core/theme.dart';
 import '../../core/utils/format.dart';
+import '../account/account_page.dart';
+import '../membership/membership_page.dart';
+import '../servers/servers_page.dart';
 import 'home_controller.dart';
 
 /// Home shell (phase 3 §5.1 + the Android home mockup).
@@ -87,12 +90,16 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ],
       ),
-      body: _tabIndex == 0
-          ? _buildHome(context, home)
-          : _ComingSoonPage(
-              label: _tabs[_tabIndex].label,
-              icon: _tabs[_tabIndex].icon,
-            ),
+      body: switch (_tabIndex) {
+        0 => _buildHome(context, home),
+        1 => const ServersPage(),
+        2 => const MembershipPage(),
+        4 => const AccountPage(),
+        _ => _ComingSoonPage(
+          label: _tabs[_tabIndex].label,
+          icon: _tabs[_tabIndex].icon,
+        ),
+      },
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _tabIndex,
         onTap: (index) => setState(() => _tabIndex = index),
@@ -148,7 +155,10 @@ class _HomePageState extends ConsumerState<HomePage> {
           const SizedBox(height: 12),
           _MembershipCard(user: home.user),
           const SizedBox(height: 12),
-          _QuickActions(onRefreshSubscription: _onRefreshSubscription),
+          _QuickActions(
+            onServers: () => setState(() => _tabIndex = 1),
+            onRefreshSubscription: _onRefreshSubscription,
+          ),
         ],
       ),
     );
@@ -558,18 +568,28 @@ class _PlanBadge extends StatelessWidget {
   }
 }
 
-/// Quick actions row. Only "刷新订阅" works in slice 1; the rest are
-/// visibly disabled with an "即将上线" label.
+/// Quick actions row. 服务器 switches to the servers tab and 刷新订阅
+/// refreshes the subscription; 测速 and 客服 are visibly disabled with
+/// an "即将上线" label.
 class _QuickActions extends StatelessWidget {
-  const _QuickActions({required this.onRefreshSubscription});
+  const _QuickActions({
+    required this.onServers,
+    required this.onRefreshSubscription,
+  });
 
+  final VoidCallback onServers;
   final Future<void> Function() onRefreshSubscription;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _QuickAction(icon: Icons.dns_outlined, label: '服务器', enabled: false),
+        _QuickAction(
+          icon: Icons.dns_outlined,
+          label: '服务器',
+          enabled: true,
+          onTap: () async => onServers(),
+        ),
         const SizedBox(width: 8),
         _QuickAction(icon: Icons.speed_outlined, label: '测速', enabled: false),
         const SizedBox(width: 8),
@@ -633,7 +653,8 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
-/// Placeholder page for tabs that land in later slices.
+/// Placeholder page for tabs that land in later slices (消息 only, now
+/// that 服务器 / 会员 / 我的 are wired in slice 2).
 class _ComingSoonPage extends StatelessWidget {
   const _ComingSoonPage({required this.label, required this.icon});
 
