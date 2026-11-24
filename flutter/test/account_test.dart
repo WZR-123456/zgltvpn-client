@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zgltvpn/core/api/api_client.dart';
 import 'package:zgltvpn/core/api/api_exception.dart';
 import 'package:zgltvpn/core/api/auth_api.dart';
@@ -12,6 +13,7 @@ import 'package:zgltvpn/core/models/plan.dart';
 import 'package:zgltvpn/core/models/user.dart';
 import 'package:zgltvpn/core/providers.dart';
 import 'package:zgltvpn/core/storage/secure_storage.dart';
+import 'package:zgltvpn/core/theme.dart';
 import 'package:zgltvpn/features/auth/auth_controller.dart';
 import 'package:zgltvpn/features/account/account_page.dart';
 import 'package:zgltvpn/features/connection/home_controller.dart';
@@ -115,7 +117,7 @@ Future<void> pumpAccount(
         homeControllerProvider.overrideWith((ref) => home),
         if (auth != null) authControllerProvider.overrideWith((ref) => auth),
       ],
-      child: const MaterialApp(home: AccountPage()),
+      child: MaterialApp(theme: ZgltTheme.light, home: const AccountPage()),
     ),
   );
   await tester.pumpAndSettle();
@@ -140,11 +142,27 @@ void main() {
       await home.refresh();
       await pumpAccount(tester, home: home);
 
-      for (final label in ['工作空间', '设备管理', '安全中心', '客服中心', '设置']) {
+      for (final label in ['工作空间', '设备管理', '安全中心', '客服中心']) {
         expect(find.text(label), findsOneWidget);
       }
       expect(find.text('即将上线'), findsWidgets);
       expect(find.text('退出登录'), findsOneWidget);
+    });
+
+    testWidgets('tapping settings opens the settings page', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final home = makeHomeController(authApi: FakeAuthApi(makeUser()));
+      await home.refresh();
+      await pumpAccount(tester, home: home);
+
+      expect(find.text('设置'), findsOneWidget);
+      await tester.tap(find.text('设置'));
+      await tester.pumpAndSettle();
+
+      // The settings page pushed on top (back button comes from AppBar).
+      expect(find.text('外观'), findsOneWidget);
+      expect(find.text('简体中文'), findsOneWidget);
+      expect(find.byType(BackButton), findsOneWidget);
     });
 
     testWidgets('invite section shows coming soon and no code or link', (

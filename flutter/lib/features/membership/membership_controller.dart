@@ -43,6 +43,17 @@ String formatPrice(double? price) {
   return '¥${price.toStringAsFixed(2)}';
 }
 
+/// Displays a plan speed limit, or "—" when the backend has none.
+/// A bare number at or above 10000 is backend dirty data (the known
+/// `speed = "100000"` case, see Format) — never shown raw. Non-numeric
+/// values (e.g. "100Mbps") are shown as stored.
+String displaySpeed(String? speed) {
+  if (speed == null || speed.isEmpty) return '—';
+  final numeric = double.tryParse(speed);
+  if (numeric != null && numeric >= 10000) return '—';
+  return speed;
+}
+
 /// True when the plan expires within 7 days (and has not expired yet):
 /// the amber reminder bar shows (phase 3 §5.7, "到期前 7 天显示琥珀提醒条").
 bool shouldShowExpiryReminder(int expiresMs, {DateTime? now}) {

@@ -12,6 +12,7 @@ import 'package:zgltvpn/core/models/plan.dart';
 import 'package:zgltvpn/core/models/user.dart';
 import 'package:zgltvpn/core/providers.dart';
 import 'package:zgltvpn/core/storage/secure_storage.dart';
+import 'package:zgltvpn/core/theme.dart';
 import 'package:zgltvpn/core/utils/format.dart';
 import 'package:zgltvpn/features/connection/home_controller.dart';
 import 'package:zgltvpn/features/membership/membership_controller.dart';
@@ -162,7 +163,7 @@ Future<void> pumpMembership(
         catalogApiProvider.overrideWithValue(catalog),
         homeControllerProvider.overrideWith((ref) => home),
       ],
-      child: const MaterialApp(home: MembershipPage()),
+      child: MaterialApp(theme: ZgltTheme.light, home: const MembershipPage()),
     ),
   );
   await tester.pumpAndSettle();
@@ -199,6 +200,15 @@ void main() {
       expect(formatPrice(null), '—');
       expect(formatPrice(10), '¥10');
       expect(formatPrice(10.5), '¥10.50');
+    });
+
+    test('displaySpeed hides missing and dirty speeds', () {
+      expect(displaySpeed(null), '—');
+      expect(displaySpeed(''), '—');
+      expect(displaySpeed('100Mbps'), '100Mbps');
+      // The known dirty backend value is never shown raw.
+      expect(displaySpeed('100000'), '—');
+      expect(displaySpeed('10000'), '—');
     });
 
     test('expiry reminder shows at 7 days or less, not at 8', () {
@@ -332,6 +342,82 @@ void main() {
       expect(find.text('购买与续订功能即将上线'), findsWidgets);
       expect(find.text('我的订单'), findsOneWidget);
       expect(find.text('即将上线'), findsWidgets);
+    });
+
+    testWidgets(
+      'tapping a plan card expands its detail, second tap collapses',
+      (tester) async {
+        const detailPlan = Plan(
+          id: 'pd',
+          name: '详情套餐',
+          kind: 'sub',
+          trafficGb: 20,
+          prices: PlanPrices(month: 10, quarter: 25, year: 90),
+          nodeIds: ['n1', 'n2'],
+          enabled: true,
+          devices: '2',
+          speed: '100Mbps',
+        );
+        final home = await makeHomeController(makeUser());
+        await pumpMembership(
+          tester,
+          catalog: FakeCatalogApi(const [detailPlan]),
+          home: home,
+        );
+
+        // Collapsed: only the summary is shown.
+        expect(find.text('详情套餐'), findsOneWidget);
+        expect(find.text('¥10/月'), findsOneWidget);
+        expect(find.text('设备数'), findsNothing);
+        expect(find.text('限速'), findsNothing);
+
+        await tester.tap(find.text('详情套餐'));
+        await tester.pumpAndSettle();
+
+        // Expanded: all three period prices plus the stored detail.
+        expect(find.text('月价'), findsOneWidget);
+        expect(find.text('¥10'), findsOneWidget);
+        expect(find.text('季价'), findsOneWidget);
+        expect(find.text('¥25'), findsOneWidget);
+        expect(find.text('年价'), findsOneWidget);
+        expect(find.text('¥90'), findsOneWidget);
+        expect(find.text('流量'), findsOneWidget);
+        // Shown in both the collapsed summary and the detail rows.
+        expect(find.text('20 GB'), findsWidgets);
+        expect(find.text('设备数'), findsOneWidget);
+        expect(find.text('2'), findsOneWidget);
+        expect(find.text('限速'), findsOneWidget);
+        expect(find.text('100Mbps'), findsOneWidget);
+        expect(find.text('节点'), findsOneWidget);
+        expect(find.text('包含 2 个节点'), findsOneWidget);
+
+        await tester.tap(find.text('详情套餐'));
+        await tester.pumpAndSettle();
+        expect(find.text('设备数'), findsNothing);
+        expect(find.text('限速'), findsNothing);
+        expect(find.text('详情套餐'), findsOneWidget);
+      },
+    );
+
+    testWidgets('expanded detail shows a dash for missing fields', (
+      tester,
+    ) async {
+      // testPlans p1 has no devices/speed and unrestricted nodes.
+      final home = await makeHomeController(makeUser());
+      await pumpMembership(
+        tester,
+        catalog: FakeCatalogApi(testPlans),
+        home: home,
+      );
+
+      await tester.tap(find.text('月套餐'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('设备数'), findsOneWidget);
+      expect(find.text('限速'), findsOneWidget);
+      expect(find.text('全部节点'), findsOneWidget);
+      // Devices + speed are both missing: shown as "—", never made up.
+      expect(find.text('—'), findsWidgets);
     });
   });
 }

@@ -62,8 +62,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
     final error = _localError ?? auth.error;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final extra = theme.extension<ZgltExtraColors>()!;
     return Scaffold(
-      backgroundColor: ZgltColors.bg,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -79,14 +83,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: ZgltColors.accent,
+                        color: scheme.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.center,
-                      child: const Text(
+                      child: Text(
                         'Z',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: scheme.onPrimary,
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
                         ),
@@ -94,22 +98,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'ZGLTVPN',
                     textAlign: TextAlign.center,
-                    style: ZgltText.title,
+                    style: textTheme.titleLarge,
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     '中国联通境外 VPN',
                     textAlign: TextAlign.center,
-                    style: ZgltText.caption,
+                    style: textTheme.bodySmall,
                   ),
                   const SizedBox(height: 32),
                   Container(
                     decoration: BoxDecoration(
-                      color: ZgltColors.surface,
-                      border: Border.all(color: ZgltColors.border),
+                      color: scheme.surface,
+                      border: Border.all(color: scheme.outline),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.all(16),
@@ -166,23 +170,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             '该账号开启了两步验证，请打开验证器 App 查看 6 位验证码。',
-                            style: ZgltText.caption,
+                            style: textTheme.bodySmall,
                           ),
                         ],
                         if (error != null) ...[
                           const SizedBox(height: 12),
                           Container(
                             decoration: BoxDecoration(
-                              color: ZgltColors.dangerSoft,
+                              color: extra.dangerSoft,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             padding: const EdgeInsets.all(12),
                             child: Text(
                               error,
-                              style: ZgltText.caption.copyWith(
-                                color: ZgltColors.danger,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: extra.danger,
                               ),
                             ),
                           ),
@@ -196,10 +200,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     '还没有账号？请到官网注册',
                     textAlign: TextAlign.center,
-                    style: ZgltText.caption,
+                    style: textTheme.bodySmall,
                   ),
                 ],
               ),

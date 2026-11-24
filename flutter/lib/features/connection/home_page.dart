@@ -57,6 +57,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final home = ref.watch(homeControllerProvider);
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -66,21 +68,21 @@ class _HomePageState extends ConsumerState<HomePage> {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: ZgltColors.accent,
+                color: scheme.primary,
                 borderRadius: BorderRadius.circular(6),
               ),
               alignment: Alignment.center,
-              child: const Text(
+              child: Text(
                 'Z',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: scheme.onPrimary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
             const SizedBox(width: 8),
-            const Text('ZGLTVPN', style: ZgltText.heading),
+            Text('ZGLTVPN', style: textTheme.titleMedium),
           ],
         ),
         actions: [
@@ -116,6 +118,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _buildHome(BuildContext context, HomeState home) {
+    final scheme = Theme.of(context).colorScheme;
     if (home.isRefreshing && home.user == null && home.error == null) {
       return ListView(
         padding: const EdgeInsets.all(16),
@@ -130,7 +133,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
     return RefreshIndicator(
       onRefresh: () => ref.read(homeControllerProvider.notifier).refresh(),
-      color: ZgltColors.accent,
+      color: scheme.primary,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
@@ -173,6 +176,9 @@ class _SyncBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final text = home.offline
         ? '未同步'
         : home.lastSync != null
@@ -180,12 +186,15 @@ class _SyncBadge extends StatelessWidget {
         : '未同步';
     return Container(
       decoration: BoxDecoration(
-        color: ZgltColors.surfaceMuted,
-        border: Border.all(color: ZgltColors.border),
+        color: scheme.surfaceContainerHighest,
+        border: Border.all(color: scheme.outline),
         borderRadius: BorderRadius.circular(10),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      child: Text(text, style: ZgltText.tiny.copyWith(color: ZgltColors.text2)),
+      child: Text(
+        text,
+        style: textTheme.labelSmall?.copyWith(color: extra.text2),
+      ),
     );
   }
 }
@@ -198,10 +207,11 @@ class _Skeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: ZgltColors.surfaceMuted,
+        color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
     );
@@ -215,19 +225,21 @@ class _OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final sync = home.lastSync != null
         ? ' · 最后同步 ${Format.syncTime(home.lastSync!)}'
         : '';
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: ZgltColors.warningSoft,
+        color: extra.warningSoft,
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(12),
       child: Text(
         '无网络，显示的是缓存数据$sync',
-        style: ZgltText.caption.copyWith(color: ZgltColors.warning),
+        style: textTheme.bodySmall?.copyWith(color: extra.warning),
       ),
     );
   }
@@ -241,10 +253,12 @@ class _ErrorBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: ZgltColors.dangerSoft,
+        color: extra.dangerSoft,
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(12),
@@ -253,7 +267,7 @@ class _ErrorBlock extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: ZgltText.caption.copyWith(color: ZgltColors.danger),
+              style: textTheme.bodySmall?.copyWith(color: extra.danger),
             ),
           ),
           TextButton(onPressed: onRetry, child: const Text('重试')),
@@ -271,10 +285,11 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: ZgltColors.surface,
-        border: Border.all(color: ZgltColors.border),
+        color: scheme.surface,
+        border: Border.all(color: scheme.outline),
         borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.all(16),
@@ -283,13 +298,14 @@ class _Card extends StatelessWidget {
   }
 }
 
-Widget _kvRow(String key, Widget value) {
+Widget _kvRow(BuildContext context, String key, Widget value) {
+  final textTheme = Theme.of(context).textTheme;
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 8),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(key, style: ZgltText.caption),
+        Text(key, style: textTheme.bodySmall),
         Flexible(child: value),
       ],
     ),
@@ -316,6 +332,9 @@ class _ConnectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final nodeLabel = home.nodeTags.isEmpty
         ? '暂无可用节点'
         : '自动 · ${home.nodeTags.length} 个节点';
@@ -331,29 +350,34 @@ class _ConnectCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 shape: const CircleBorder(),
                 padding: EdgeInsets.zero,
-                backgroundColor: ZgltColors.accent,
+                backgroundColor: scheme.primary,
               ),
               child: const Icon(Icons.power_settings_new, size: 40),
             ),
           ),
           const SizedBox(height: 14),
-          const Text('未连接', style: ZgltText.title),
+          Text('未连接', style: textTheme.titleLarge),
           const SizedBox(height: 2),
-          const Text(
+          Text(
             'VPN 连接功能开发中，阶段 2.5 原型后上线',
-            style: ZgltText.caption,
+            style: textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           ..._withDividers([
-            _kvRow('当前节点', Text(nodeLabel, style: ZgltText.bodyStrong)),
+            _kvRow(
+              context,
+              '当前节点',
+              Text(nodeLabel, style: textTheme.titleSmall),
+            ),
             if (home.subscriptionNote != null)
               _kvRow(
+                context,
                 '订阅',
                 Flexible(
                   child: Text(
                     home.subscriptionNote!,
-                    style: ZgltText.caption.copyWith(color: ZgltColors.warning),
+                    style: textTheme.bodySmall?.copyWith(color: extra.warning),
                     textAlign: TextAlign.right,
                   ),
                 ),
@@ -372,15 +396,16 @@ class _SpeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _Card(
+    final textTheme = Theme.of(context).textTheme;
+    return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('实时速率', style: ZgltText.heading),
-          SizedBox(height: 10),
-          Text('暂无数据', style: ZgltText.body),
-          SizedBox(height: 2),
-          Text('连接后显示实时速率、延迟与累计流量', style: ZgltText.caption),
+          Text('实时速率', style: textTheme.titleMedium),
+          const SizedBox(height: 10),
+          Text('暂无数据', style: textTheme.bodyMedium),
+          const SizedBox(height: 2),
+          Text('连接后显示实时速率、延迟与累计流量', style: textTheme.bodySmall),
         ],
       ),
     );
@@ -396,6 +421,7 @@ class _TrafficCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     final planName = user?.planDisplayName ?? '';
     final sub = planName.isNotEmpty ? planName : '暂无生效套餐';
     return _Card(
@@ -405,24 +431,25 @@ class _TrafficCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('流量', style: ZgltText.heading),
-              Text(sub, style: ZgltText.caption),
+              Text('流量', style: textTheme.titleMedium),
+              Text(sub, style: textTheme.bodySmall),
             ],
           ),
           const SizedBox(height: 10),
           if (user == null) ...[
-            const Text('暂无数据', style: ZgltText.body),
+            Text('暂无数据', style: textTheme.bodyMedium),
             const SizedBox(height: 2),
-            const Text('登录后同步流量数据', style: ZgltText.caption),
+            Text('登录后同步流量数据', style: textTheme.bodySmall),
           ] else ...[
-            _trafficBody(user!),
+            _trafficBody(context, user!),
           ],
         ],
       ),
     );
   }
 
-  Widget _trafficBody(User user) {
+  Widget _trafficBody(BuildContext context, User user) {
+    final textTheme = Theme.of(context).textTheme;
     final used = user.trafficUsed;
     final total = user.trafficTotal;
     final dirty = Format.isDirtyTraffic(total);
@@ -436,8 +463,14 @@ class _TrafficCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('已用', style: ZgltText.caption),
-                  Text(Format.bytes(used), style: ZgltText.monoLarge),
+                  Text('已用', style: textTheme.bodySmall),
+                  Text(
+                    Format.bytes(used),
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -445,8 +478,14 @@ class _TrafficCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('总计', style: ZgltText.caption),
-                  Text(Format.bytes(total), style: ZgltText.monoLarge),
+                  Text('总计', style: textTheme.bodySmall),
+                  Text(
+                    Format.bytes(total),
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -459,11 +498,11 @@ class _TrafficCard extends StatelessWidget {
           Text(
             '已用 ${Format.bytes(used)} / 总计 ${Format.bytes(total)}'
             ' · 剩余 ${Format.bytes(remaining)}',
-            style: ZgltText.caption,
+            style: textTheme.bodySmall,
           ),
         ] else if (dirty) ...[
           const SizedBox(height: 6),
-          const Text('流量总额数据异常，显示可能不准', style: ZgltText.caption),
+          Text('流量总额数据异常，显示可能不准', style: textTheme.bodySmall),
         ],
       ],
     );
@@ -478,18 +517,20 @@ class _TrafficBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final ratio = (used / total).clamp(0.0, 1.0);
     final color = ratio > 1
-        ? ZgltColors.danger
+        ? extra.danger
         : ratio > 0.8
-        ? ZgltColors.warning
-        : ZgltColors.accent;
+        ? extra.warning
+        : scheme.primary;
     return ClipRRect(
       borderRadius: BorderRadius.circular(3),
       child: LinearProgressIndicator(
         value: ratio,
         minHeight: 6,
-        backgroundColor: ZgltColors.surfaceMuted,
+        backgroundColor: scheme.surfaceContainerHighest,
         valueColor: AlwaysStoppedAnimation<Color>(color),
       ),
     );
@@ -504,6 +545,7 @@ class _MembershipCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     final planName = user?.planDisplayName ?? '';
     final expires = user?.expires ?? 0;
     final days = Format.daysRemaining(expires);
@@ -512,25 +554,33 @@ class _MembershipCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('会员', style: ZgltText.heading),
+          Text('会员', style: textTheme.titleMedium),
           const SizedBox(height: 2),
           ..._withDividers([
             _kvRow(
+              context,
               '当前套餐',
               Text(
                 planName.isNotEmpty ? planName : '暂无生效套餐',
-                style: ZgltText.bodyStrong,
+                style: textTheme.titleSmall,
               ),
             ),
-            _kvRow('到期日', Text(Format.expiry(expires), style: ZgltText.mono)),
-            _kvRow('状态', _PlanBadge(expired: expired, days: days)),
+            _kvRow(
+              context,
+              '到期日',
+              Text(
+                Format.expiry(expires),
+                style: textTheme.bodyMedium?.copyWith(fontFamily: 'monospace'),
+              ),
+            ),
+            _kvRow(context, '状态', _PlanBadge(expired: expired, days: days)),
           ]),
           const SizedBox(height: 10),
           ElevatedButton(onPressed: null, child: const Text('续订套餐')),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             '购买与续订功能即将上线',
-            style: ZgltText.caption,
+            style: textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),
         ],
@@ -547,11 +597,14 @@ class _PlanBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final (String text, Color bg, Color fg) = expired
-        ? ('已过期', ZgltColors.dangerSoft, ZgltColors.danger)
+        ? ('已过期', extra.dangerSoft, extra.danger)
         : days <= 30
-        ? ('$days 天后到期', ZgltColors.warningSoft, ZgltColors.warning)
-        : ('生效中', ZgltColors.accentSoft, ZgltColors.accent);
+        ? ('$days 天后到期', extra.warningSoft, extra.warning)
+        : ('生效中', extra.accentSoft, scheme.primary);
     return Container(
       height: 20,
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -562,7 +615,10 @@ class _PlanBadge extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         text,
-        style: ZgltText.tiny.copyWith(color: fg, fontWeight: FontWeight.w600),
+        style: textTheme.labelSmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -621,18 +677,21 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final content = Column(
       children: [
-        Icon(icon, size: 20, color: ZgltColors.accent),
+        Icon(icon, size: 20, color: scheme.primary),
         const SizedBox(height: 6),
-        Text(label, style: ZgltText.caption.copyWith(color: ZgltColors.text2)),
-        if (!enabled) const Text('即将上线', style: ZgltText.tiny),
+        Text(label, style: textTheme.bodySmall?.copyWith(color: extra.text2)),
+        if (!enabled) Text('即将上线', style: textTheme.labelSmall),
       ],
     );
     final box = Container(
       decoration: BoxDecoration(
-        color: ZgltColors.surface,
-        border: Border.all(color: ZgltColors.border),
+        color: scheme.surface,
+        border: Border.all(color: scheme.outline),
         borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
@@ -663,15 +722,17 @@ class _ComingSoonPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 48, color: ZgltColors.text3),
+          Icon(icon, size: 48, color: extra.text3),
           const SizedBox(height: 12),
-          Text('$label即将上线', style: ZgltText.body),
+          Text('$label即将上线', style: textTheme.bodyMedium),
           const SizedBox(height: 4),
-          const Text('该功能在后续切片中上线', style: ZgltText.caption),
+          Text('该功能在后续切片中上线', style: textTheme.bodySmall),
         ],
       ),
     );

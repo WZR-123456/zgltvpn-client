@@ -302,5 +302,91 @@ void main() {
       );
       expect(button.onPressed, isNull);
     });
+
+    testWidgets('dark theme: node rows use the dark surface, not light', (
+      tester,
+    ) async {
+      final fake = FakeCatalogApi(
+        nodesResult: [_hkNode, _sgNode, _disabledNode],
+        statusResult: [_hkStatus, _sgStatus],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [catalogApiProvider.overrideWithValue(fake)],
+          child: MaterialApp(
+            theme: ZgltTheme.light,
+            darkTheme: ZgltTheme.dark,
+            themeMode: ThemeMode.dark,
+            home: const Scaffold(body: ServersPage()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The node row box resolves to the dark card surface.
+      final row = tester.widget<Container>(
+        find.ancestor(of: find.text('香港 01'), matching: find.byType(Container)),
+      );
+      final rowColor = (row.decoration as BoxDecoration?)?.color;
+      expect(rowColor, ZgltColorsDark.surface);
+      expect(rowColor, isNot(ZgltColors.surface));
+
+      // The node name text resolves to the dark primary text colour.
+      final name = tester.widget<Text>(find.text('香港 01'));
+      expect(name.style?.color, ZgltColorsDark.text);
+
+      // The "可用" badge uses the dark soft-accent fill (its ancestors
+      // also include the row box, so match by colour, not by count).
+      final badgeColors = tester
+          .widgetList<Container>(
+            find.ancestor(
+              of: find.text('可用'),
+              matching: find.byType(Container),
+            ),
+          )
+          .map((c) => (c.decoration as BoxDecoration?)?.color)
+          .toList();
+      expect(badgeColors, contains(ZgltColorsDark.accentSoft));
+    });
+
+    testWidgets('light theme: node rows keep the old light surface', (
+      tester,
+    ) async {
+      final fake = FakeCatalogApi(
+        nodesResult: [_hkNode, _sgNode, _disabledNode],
+        statusResult: [_hkStatus, _sgStatus],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [catalogApiProvider.overrideWithValue(fake)],
+          child: MaterialApp(
+            theme: ZgltTheme.light,
+            darkTheme: ZgltTheme.dark,
+            themeMode: ThemeMode.light,
+            home: const Scaffold(body: ServersPage()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final row = tester.widget<Container>(
+        find.ancestor(of: find.text('香港 01'), matching: find.byType(Container)),
+      );
+      expect((row.decoration as BoxDecoration?)?.color, ZgltColors.surface);
+
+      final name = tester.widget<Text>(find.text('香港 01'));
+      expect(name.style?.color, ZgltColors.text);
+
+      final badgeColors = tester
+          .widgetList<Container>(
+            find.ancestor(
+              of: find.text('可用'),
+              matching: find.byType(Container),
+            ),
+          )
+          .map((c) => (c.decoration as BoxDecoration?)?.color)
+          .toList();
+      expect(badgeColors, contains(ZgltColors.accentSoft));
+    });
   });
 }

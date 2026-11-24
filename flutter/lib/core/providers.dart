@@ -6,8 +6,10 @@ import 'api/catalog_api.dart';
 import 'api/subscription_api.dart';
 import 'config/template_loader.dart';
 import 'storage/secure_storage.dart';
+import 'storage/settings_storage.dart';
 import '../features/auth/auth_controller.dart';
 import '../features/connection/home_controller.dart';
+import '../features/settings/settings_controller.dart';
 import '../platform/vpn/vpn_service.dart';
 
 /// Riverpod providers. All API access flows through these; widgets never
@@ -57,3 +59,14 @@ final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
     onUnauthorized: () => ref.read(authControllerProvider.notifier).logout(),
   ),
 );
+
+/// Non-sensitive local settings (SharedPreferences). The controller loads
+/// the persisted values once on creation.
+final settingsStorageProvider = Provider<SettingsStorage>(
+  (ref) => SettingsStorage(),
+);
+
+final settingsControllerProvider =
+    StateNotifierProvider<SettingsController, SettingsState>(
+      (ref) => SettingsController(ref.watch(settingsStorageProvider))..load(),
+    );

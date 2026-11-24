@@ -27,12 +27,16 @@ class _ZgltAppState extends ConsumerState<ZgltApp> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
+    final themeMode = ref.watch(
+      settingsControllerProvider.select((s) => s.themeMode),
+    );
+    final textTheme = Theme.of(context).textTheme;
     final Widget home;
     if (auth.isLoggedIn) {
       home = const HomePage();
     } else if (auth.isLoading) {
-      home = const Scaffold(
-        body: Center(child: Text('加载中…', style: ZgltText.caption)),
+      home = Scaffold(
+        body: Center(child: Text('加载中…', style: textTheme.bodySmall)),
       );
     } else {
       home = const LoginPage();
@@ -40,6 +44,8 @@ class _ZgltAppState extends ConsumerState<ZgltApp> {
     return MaterialApp(
       title: 'ZGLTVPN',
       theme: ZgltTheme.light,
+      darkTheme: ZgltTheme.dark,
+      themeMode: themeMode.materialThemeMode,
       debugShowCheckedModeBanner: false,
       home: home,
     );

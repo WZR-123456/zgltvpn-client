@@ -4,6 +4,28 @@ Flutter rewrite of the ZGLTVPN Android client (NORTH project, Phase 4).
 Brand: **ZGLTVPN** (中国联通境外VPN). NORTH is only the internal project
 codename.
 
+## Status (slice 3 — 2026-11-24)
+
+- [x] Settings page (phase 3 §5.11): theme light/dark/follow-system
+      persisted in SharedPreferences and applied via MaterialApp
+      `themeMode` (new dark theme from the site dark palette) +
+      `darkTheme`; language shows 简体中文 with more languages honestly
+      marked coming soon; auto-connect / subscription auto-refresh /
+      notifications are local-only toggles with honest subtitles; update
+      check is disabled (no version-check API, no faked "latest"
+      result); version shown from `ApiConfig.clientVersion` (0.1.0,
+      in sync with pubspec.yaml)
+- [x] Membership plan cards expand on tap to show the plan detail (all
+      three period prices, traffic, device limit, speed limit, nodes);
+      second tap collapses; missing fields show "—", dirty speed
+      (`100000`) is hidden
+- [x] Account tab "设置" entry now opens the settings page (push
+      navigation, AppBar back button); connect button still disabled
+- [ ] Real VPN tunnel — lands with the Phase 2.5 prototype
+      (`sing_box` plugin adapter for the `VpnService` interface)
+- [ ] Purchase / renewal, orders, messages, node switching, invite,
+      workspace / devices / security / support (later Phase 4 slices)
+
 ## Status (slice 2 — 2026-11-24)
 
 - [x] Servers page (search + region-grouped node list from `/api/nodes` +
@@ -22,7 +44,7 @@ codename.
 - [ ] Real VPN tunnel — lands with the Phase 2.5 prototype
       (`sing_box` plugin adapter for the `VpnService` interface)
 - [ ] Purchase / renewal, orders, messages, node switching, invite,
-      workspace / devices / security / support / settings
+      workspace / devices / security / support
       (later Phase 4 slices)
 
 ## Status (slice 1 — 2026-11-24)
@@ -57,13 +79,15 @@ lib/
 │   ├── config/                # mergeConfig port + template loader
 │   ├── models/                # User / Plan / Node / UserinfoHeader
 │   ├── storage/               # SecureStorage (flutter_secure_storage)
+│   │                          # + SettingsStorage (shared_preferences)
 │   └── utils/                 # Format (bytes, expiry, dirty-data clamp)
 ├── features/
 │   ├── auth/                  # login page + AuthController
 │   ├── connection/            # home shell + HomeController
 │   ├── servers/               # servers page + ServersController (slice 2)
 │   ├── membership/            # membership page + MembershipController (slice 2)
-│   └── account/               # account page (slice 2)
+│   ├── account/               # account page (slice 2)
+│   └── settings/              # settings page + SettingsController (slice 3)
 └── platform/
     └── vpn/                   # plugin-agnostic VpnService interface + stub
 assets/
@@ -74,7 +98,8 @@ test/
 ├── format_test.dart
 ├── servers_test.dart          # slice 2: servers controller + page
 ├── membership_test.dart       # slice 2: membership controller + page
-└── account_test.dart          # slice 2: account page
+├── account_test.dart          # slice 2: account page
+└── settings_test.dart         # slice 3: settings controller + page
 ```
 
 ## Run / build

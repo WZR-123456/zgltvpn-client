@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/user.dart';
 import '../../core/providers.dart';
 import '../../core/theme.dart';
+import '../settings/settings_page.dart';
 
 /// Personal center ("我的", phase 3 §5.14): account card, invite
 /// section, entry list, logout.
@@ -20,12 +21,14 @@ class AccountPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final home = ref.watch(homeControllerProvider);
     final loading = home.isRefreshing && home.user == null;
     final loadFailed = home.error != null && home.user == null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('我的', style: ZgltText.heading)),
+      appBar: AppBar(title: Text('我的', style: textTheme.titleMedium)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -46,7 +49,7 @@ class AccountPage extends ConsumerWidget {
             const SizedBox(height: 12),
             const _InviteCard(),
             const SizedBox(height: 12),
-            const _Card(
+            _Card(
               child: Column(
                 children: [
                   _DisabledEntry(
@@ -60,7 +63,13 @@ class AccountPage extends ConsumerWidget {
                   Divider(height: 1),
                   _DisabledEntry(icon: Icons.headset_outlined, label: '客服中心'),
                   Divider(height: 1),
-                  _DisabledEntry(icon: Icons.settings_outlined, label: '设置'),
+                  _Entry(
+                    icon: Icons.settings_outlined,
+                    label: '设置',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SettingsPage()),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -70,10 +79,10 @@ class AccountPage extends ConsumerWidget {
               child: TextButton(
                 onPressed: () =>
                     ref.read(authControllerProvider.notifier).logout(),
-                child: const Text(
+                child: Text(
                   '退出登录',
                   style: TextStyle(
-                    color: ZgltColors.danger,
+                    color: extra.danger,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -92,16 +101,18 @@ class _OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: ZgltColors.warningSoft,
+        color: extra.warningSoft,
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(12),
       child: Text(
         '无网络，余额为缓存数据',
-        style: ZgltText.caption.copyWith(color: ZgltColors.warning),
+        style: textTheme.bodySmall?.copyWith(color: extra.warning),
       ),
     );
   }
@@ -114,10 +125,11 @@ class _Skeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: ZgltColors.surfaceMuted,
+        color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
     );
@@ -132,10 +144,12 @@ class _ErrorBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: ZgltColors.dangerSoft,
+        color: extra.dangerSoft,
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(12),
@@ -144,7 +158,7 @@ class _ErrorBlock extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: ZgltText.caption.copyWith(color: ZgltColors.danger),
+              style: textTheme.bodySmall?.copyWith(color: extra.danger),
             ),
           ),
           TextButton(onPressed: onRetry, child: const Text('重试')),
@@ -161,25 +175,30 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: ZgltColors.surface,
-        border: Border.all(color: ZgltColors.border),
+    final scheme = Theme.of(context).colorScheme;
+    // A Material (not a plain Container): enabled ListTiles / InkWells
+    // inside paint their ink on it. Same colour, border and radius as
+    // the Container version.
+    return Material(
+      color: scheme.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: scheme.outline),
       ),
-      padding: const EdgeInsets.all(16),
-      child: child,
+      clipBehavior: Clip.antiAlias,
+      child: Padding(padding: const EdgeInsets.all(16), child: child),
     );
   }
 }
 
-Widget _kvRow(String key, Widget value) {
+Widget _kvRow(BuildContext context, String key, Widget value) {
+  final textTheme = Theme.of(context).textTheme;
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 8),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(key, style: ZgltText.caption),
+        Text(key, style: textTheme.bodySmall),
         Flexible(child: value),
       ],
     ),
@@ -196,15 +215,17 @@ class _AccountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final current = user;
     if (current == null) {
-      return const _Card(
+      return _Card(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('账号', style: ZgltText.heading),
-            SizedBox(height: 6),
-            Text('暂无数据', style: ZgltText.body),
+            Text('账号', style: textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text('暂无数据', style: textTheme.bodyMedium),
           ],
         ),
       );
@@ -213,30 +234,36 @@ class _AccountCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('账号', style: ZgltText.heading),
+          Text('账号', style: textTheme.titleMedium),
           const SizedBox(height: 2),
           _kvRow(
+            context,
             '邮箱',
             Text(
               current.email.isNotEmpty ? current.email : '—',
-              style: ZgltText.bodyStrong,
+              style: textTheme.titleSmall,
             ),
           ),
           _kvRow(
+            context,
             '昵称',
             Text(
               current.name.isNotEmpty ? current.name : '—',
-              style: ZgltText.bodyStrong,
+              style: textTheme.titleSmall,
             ),
           ),
           _kvRow(
+            context,
             '余额',
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '¥${current.balance.toStringAsFixed(2)}',
-                  style: ZgltText.monoLarge,
+                  style: textTheme.headlineSmall?.copyWith(
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 if (offline) ...[
                   const SizedBox(width: 8),
@@ -244,14 +271,14 @@ class _AccountCard extends StatelessWidget {
                     height: 20,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
-                      color: ZgltColors.warningSoft,
+                      color: extra.warningSoft,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       '缓存',
-                      style: ZgltText.tiny.copyWith(
-                        color: ZgltColors.warning,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: extra.warning,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -273,6 +300,8 @@ class _InviteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,25 +309,46 @@ class _InviteCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('邀请好友', style: ZgltText.heading),
+              Text('邀请好友', style: textTheme.titleMedium),
               Container(
                 height: 20,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
-                  color: ZgltColors.surfaceMuted,
+                  color: scheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 alignment: Alignment.center,
-                child: const Text('即将上线', style: ZgltText.tiny),
+                child: Text('即将上线', style: textTheme.labelSmall),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          const Text('邀请功能即将上线', style: ZgltText.caption),
+          Text('邀请功能即将上线', style: textTheme.bodySmall),
           const SizedBox(height: 6),
-          const Text('暂无邀请记录', style: ZgltText.caption),
+          Text('暂无邀请记录', style: textTheme.bodySmall),
         ],
       ),
+    );
+  }
+}
+
+/// An entry that opens a page (settings, slice 3).
+class _Entry extends StatelessWidget {
+  const _Entry({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon),
+      title: Text(label, style: textTheme.titleSmall),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: onTap,
     );
   }
 }
@@ -312,12 +362,13 @@ class _DisabledEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return ListTile(
       contentPadding: EdgeInsets.zero,
       enabled: false,
       leading: Icon(icon),
-      title: Text(label, style: ZgltText.bodyStrong),
-      trailing: const Text('即将上线', style: ZgltText.caption),
+      title: Text(label, style: textTheme.titleSmall),
+      trailing: Text('即将上线', style: textTheme.bodySmall),
       onTap: null,
     );
   }

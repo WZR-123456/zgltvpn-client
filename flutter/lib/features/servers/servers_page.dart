@@ -65,6 +65,8 @@ class _ServersPageState extends ConsumerState<ServersPage> {
   }
 
   Widget _buildBody(BuildContext context, ServersState state) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     // First load, nothing cached yet: 8-row skeleton (§5.2 加载).
     if (state.loading && state.nodes.isEmpty) {
       return ListView.builder(
@@ -105,7 +107,7 @@ class _ServersPageState extends ConsumerState<ServersPage> {
     }
     return RefreshIndicator(
       onRefresh: () => ref.read(serversControllerProvider.notifier).refresh(),
-      color: ZgltColors.accent,
+      color: scheme.primary,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
@@ -128,9 +130,9 @@ class _ServersPageState extends ConsumerState<ServersPage> {
             const SizedBox(height: 8),
           ],
           const SizedBox(height: 4),
-          const Text(
+          Text(
             '延迟为服务端 TCP 检测结果',
-            style: ZgltText.tiny,
+            style: textTheme.labelSmall,
             textAlign: TextAlign.center,
           ),
         ],
@@ -164,10 +166,11 @@ class _SkeletonRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: ZgltColors.surfaceMuted,
+        color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
     );
@@ -188,15 +191,21 @@ class _CenterState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.dns_outlined, size: 48, color: ZgltColors.text3),
+            Icon(Icons.dns_outlined, size: 48, color: extra.text3),
             const SizedBox(height: 12),
-            Text(message, style: ZgltText.body, textAlign: TextAlign.center),
+            Text(
+              message,
+              style: textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 16),
             SizedBox(
               width: 160,
@@ -219,19 +228,21 @@ class _OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final sync = state.lastSync != null
         ? ' · 最后同步 ${Format.syncTime(state.lastSync!)}'
         : '';
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: ZgltColors.warningSoft,
+        color: extra.warningSoft,
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(12),
       child: Text(
         '无网络，节点状态为缓存数据$sync',
-        style: ZgltText.caption.copyWith(color: ZgltColors.warning),
+        style: textTheme.bodySmall?.copyWith(color: extra.warning),
       ),
     );
   }
@@ -245,10 +256,12 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: ZgltColors.dangerSoft,
+        color: extra.dangerSoft,
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(12),
@@ -257,7 +270,7 @@ class _ErrorBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: ZgltText.caption.copyWith(color: ZgltColors.danger),
+              style: textTheme.bodySmall?.copyWith(color: extra.danger),
             ),
           ),
           TextButton(onPressed: onRetry, child: const Text('重试')),
@@ -274,9 +287,13 @@ class _RegionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 4),
-      child: Text(region.isEmpty ? '其他地区' : region, style: ZgltText.heading),
+      child: Text(
+        region.isEmpty ? '其他地区' : region,
+        style: textTheme.titleMedium,
+      ),
     );
   }
 }
@@ -290,6 +307,8 @@ class _NodeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final status = state.statusFor(node);
     final disabled = status == ServersNodeStatus.disabled;
     final latency = state.latencyMs(node);
@@ -302,18 +321,21 @@ class _NodeRow extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(node.name, style: ZgltText.bodyStrong, maxLines: 1),
+                Text(node.name, style: textTheme.titleSmall, maxLines: 1),
                 const SizedBox(height: 2),
                 Text(
                   '${node.region.isEmpty ? '未知地区' : node.region} · ${node.type}',
-                  style: ZgltText.caption,
+                  style: textTheme.bodySmall,
                   maxLines: 1,
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          Text(latency == null ? '—' : '${latency}ms', style: ZgltText.mono),
+          Text(
+            latency == null ? '—' : '${latency}ms',
+            style: textTheme.bodyMedium?.copyWith(fontFamily: 'monospace'),
+          ),
           const SizedBox(width: 8),
           _StatusBadge(status: status),
         ],
@@ -324,9 +346,9 @@ class _NodeRow extends StatelessWidget {
       child: row,
     );
     final boxed = Container(
-      decoration: const BoxDecoration(
-        color: ZgltColors.surface,
-        border: Border(bottom: BorderSide(color: ZgltColors.border)),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        border: Border(bottom: BorderSide(color: scheme.outline)),
       ),
       child: padded,
     );
@@ -334,7 +356,7 @@ class _NodeRow extends StatelessWidget {
       return Opacity(opacity: 0.55, child: boxed);
     }
     return Material(
-      color: ZgltColors.surface,
+      color: scheme.surface,
       child: InkWell(
         onTap: () => _showNodeSheet(context, node, state),
         child: boxed,
@@ -350,14 +372,20 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final (Color bg, Color fg) = switch (status) {
-      ServersNodeStatus.available => (ZgltColors.accentSoft, ZgltColors.accent),
-      ServersNodeStatus.unreachable => (
-        ZgltColors.dangerSoft,
-        ZgltColors.danger,
+      ServersNodeStatus.available => (extra.accentSoft, scheme.primary),
+      ServersNodeStatus.unreachable => (extra.dangerSoft, extra.danger),
+      ServersNodeStatus.disabled => (
+        scheme.surfaceContainerHighest,
+        extra.text3,
       ),
-      ServersNodeStatus.disabled => (ZgltColors.surfaceMuted, ZgltColors.text3),
-      ServersNodeStatus.unknown => (ZgltColors.surfaceMuted, ZgltColors.text3),
+      ServersNodeStatus.unknown => (
+        scheme.surfaceContainerHighest,
+        extra.text3,
+      ),
     };
     return Container(
       height: 20,
@@ -369,7 +397,10 @@ class _StatusBadge extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         status.label,
-        style: ZgltText.tiny.copyWith(color: fg, fontWeight: FontWeight.w600),
+        style: textTheme.labelSmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -384,11 +415,13 @@ Future<void> _showNodeSheet(
   Node node,
   ServersState state,
 ) {
+  final scheme = Theme.of(context).colorScheme;
+  final textTheme = Theme.of(context).textTheme;
   final status = state.statusFor(node);
   final latency = state.latencyMs(node);
   return showModalBottomSheet<void>(
     context: context,
-    backgroundColor: ZgltColors.surface,
+    backgroundColor: scheme.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -403,7 +436,11 @@ Future<void> _showNodeSheet(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(node.name, style: ZgltText.title, maxLines: 1),
+                  child: Text(
+                    node.name,
+                    style: textTheme.titleLarge,
+                    maxLines: 1,
+                  ),
                 ),
                 _StatusBadge(status: status),
               ],
@@ -419,7 +456,7 @@ Future<void> _showNodeSheet(
               value: latency == null ? '—' : '${latency}ms',
             ),
             const SizedBox(height: 4),
-            const Text('延迟为服务端 TCP 检测结果', style: ZgltText.tiny),
+            Text('延迟为服务端 TCP 检测结果', style: textTheme.labelSmall),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
@@ -429,9 +466,7 @@ Future<void> _showNodeSheet(
               ),
             ),
             const SizedBox(height: 8),
-            const Center(
-              child: Text('节点切换随 VPN 连接功能上线', style: ZgltText.caption),
-            ),
+            Center(child: Text('节点切换随 VPN 连接功能上线', style: textTheme.bodySmall)),
           ],
         ),
       ),
@@ -447,16 +482,17 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: ZgltText.caption),
+          Text(label, style: textTheme.bodySmall),
           Flexible(
             child: Text(
               value.isEmpty ? '—' : value,
-              style: ZgltText.body,
+              style: textTheme.bodyMedium,
               textAlign: TextAlign.right,
             ),
           ),

@@ -20,13 +20,14 @@ class MembershipPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
     final membership = ref.watch(membershipControllerProvider);
     final home = ref.watch(homeControllerProvider);
     final loading = membership.isLoading && membership.plans.isEmpty;
     final loadFailed = membership.error != null && membership.plans.isEmpty;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('会员中心', style: ZgltText.heading)),
+      appBar: AppBar(title: Text('会员中心', style: textTheme.titleMedium)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -59,7 +60,7 @@ class MembershipPage extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             if (membership.plans.isEmpty)
-              const _Card(child: Text('暂无在售套餐', style: ZgltText.body))
+              _Card(child: Text('暂无在售套餐', style: textTheme.bodyMedium))
             else
               ...membership.plans.map(
                 (plan) => Padding(
@@ -71,19 +72,19 @@ class MembershipPage extends ConsumerWidget {
                 ),
               ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               '购买与续订功能即将上线',
-              style: ZgltText.caption,
+              style: textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            const _Card(
+            _Card(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('会员权益', style: ZgltText.heading),
-                  SizedBox(height: 6),
-                  Text('暂无数据', style: ZgltText.body),
+                  Text('会员权益', style: textTheme.titleMedium),
+                  const SizedBox(height: 6),
+                  Text('暂无数据', style: textTheme.bodyMedium),
                 ],
               ),
             ),
@@ -93,8 +94,8 @@ class MembershipPage extends ConsumerWidget {
                 contentPadding: EdgeInsets.zero,
                 enabled: false,
                 leading: const Icon(Icons.receipt_long_outlined),
-                title: const Text('我的订单', style: ZgltText.bodyStrong),
-                trailing: const Text('即将上线', style: ZgltText.caption),
+                title: Text('我的订单', style: textTheme.titleSmall),
+                trailing: Text('即将上线', style: textTheme.bodySmall),
                 onTap: null,
               ),
             ),
@@ -110,16 +111,18 @@ class _OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: ZgltColors.warningSoft,
+        color: extra.warningSoft,
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(12),
       child: Text(
         '无网络，无法购买',
-        style: ZgltText.caption.copyWith(color: ZgltColors.warning),
+        style: textTheme.bodySmall?.copyWith(color: extra.warning),
       ),
     );
   }
@@ -132,10 +135,11 @@ class _Skeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: ZgltColors.surfaceMuted,
+        color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
     );
@@ -150,10 +154,12 @@ class _ErrorBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: ZgltColors.dangerSoft,
+        color: extra.dangerSoft,
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(12),
@@ -162,7 +168,7 @@ class _ErrorBlock extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: ZgltText.caption.copyWith(color: ZgltColors.danger),
+              style: textTheme.bodySmall?.copyWith(color: extra.danger),
             ),
           ),
           TextButton(onPressed: onRetry, child: const Text('重试')),
@@ -179,25 +185,29 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: ZgltColors.surface,
-        border: Border.all(color: ZgltColors.border),
+    final scheme = Theme.of(context).colorScheme;
+    // A Material (not a plain Container): the plan card's InkWell paints
+    // its ripple on it. Same colour, border and radius as before.
+    return Material(
+      color: scheme.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: scheme.outline),
       ),
-      padding: const EdgeInsets.all(16),
-      child: child,
+      clipBehavior: Clip.antiAlias,
+      child: Padding(padding: const EdgeInsets.all(16), child: child),
     );
   }
 }
 
-Widget _kvRow(String key, Widget value) {
+Widget _kvRow(BuildContext context, String key, Widget value) {
+  final textTheme = Theme.of(context).textTheme;
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 8),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(key, style: ZgltText.caption),
+        Text(key, style: textTheme.bodySmall),
         Flexible(child: value),
       ],
     ),
@@ -214,15 +224,17 @@ class _CurrentPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final current = user;
     if (current == null) {
-      return const _Card(
+      return _Card(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('当前套餐', style: ZgltText.heading),
-            SizedBox(height: 6),
-            Text('暂无数据', style: ZgltText.body),
+            Text('当前套餐', style: textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text('暂无数据', style: textTheme.bodyMedium),
           ],
         ),
       );
@@ -232,16 +244,16 @@ class _CurrentPlanCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('当前套餐', style: ZgltText.heading),
+            Text('当前套餐', style: textTheme.titleMedium),
             const SizedBox(height: 6),
-            const Text('暂无生效套餐', style: ZgltText.body),
+            Text('暂无生效套餐', style: textTheme.bodyMedium),
             const SizedBox(height: 10),
             const ElevatedButton(onPressed: null, child: Text('去购买套餐')),
             const SizedBox(height: 6),
-            const Text('购买与续订功能即将上线', style: ZgltText.caption),
+            Text('购买与续订功能即将上线', style: textTheme.bodySmall),
             if (offline) ...[
               const SizedBox(height: 6),
-              const Text('无网络，显示的是缓存数据', style: ZgltText.caption),
+              Text('无网络，显示的是缓存数据', style: textTheme.bodySmall),
             ],
           ],
         ),
@@ -255,30 +267,37 @@ class _CurrentPlanCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('当前套餐', style: ZgltText.heading),
+          Text('当前套餐', style: textTheme.titleMedium),
           const SizedBox(height: 2),
-          _kvRow('套餐', Text(planName, style: ZgltText.bodyStrong)),
-          _kvRow('到期日', Text(Format.expiry(expires), style: ZgltText.mono)),
-          _trafficSection(current),
+          _kvRow(context, '套餐', Text(planName, style: textTheme.titleSmall)),
+          _kvRow(
+            context,
+            '到期日',
+            Text(
+              Format.expiry(expires),
+              style: textTheme.bodyMedium?.copyWith(fontFamily: 'monospace'),
+            ),
+          ),
+          _trafficSection(context, current),
           if (shouldShowExpiryReminder(expires)) ...[
             const SizedBox(height: 10),
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: ZgltColors.warningSoft,
+                color: extra.warningSoft,
                 borderRadius: BorderRadius.circular(8),
               ),
               padding: const EdgeInsets.all(12),
               child: Text(
                 '套餐将于 ${Format.expiry(expires)} 到期',
-                style: ZgltText.caption.copyWith(color: ZgltColors.warning),
+                style: textTheme.bodySmall?.copyWith(color: extra.warning),
               ),
             ),
           ],
           const SizedBox(height: 10),
           const ElevatedButton(onPressed: null, child: Text('续订套餐')),
           const SizedBox(height: 6),
-          const Text('购买与续订功能即将上线', style: ZgltText.caption),
+          Text('购买与续订功能即将上线', style: textTheme.bodySmall),
         ],
       ),
     );
@@ -286,7 +305,8 @@ class _CurrentPlanCard extends StatelessWidget {
 
   /// Remaining-traffic progress bar, same math as the home traffic card:
   /// hidden when the total is backend dirty data, labelled, never raw.
-  Widget _trafficSection(User user) {
+  Widget _trafficSection(BuildContext context, User user) {
+    final textTheme = Theme.of(context).textTheme;
     final used = user.trafficUsed;
     final total = user.trafficTotal;
     final dirty = Format.isDirtyTraffic(total);
@@ -299,10 +319,10 @@ class _CurrentPlanCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('剩余流量', style: ZgltText.caption),
+              Text('剩余流量', style: textTheme.bodySmall),
               Text(
                 dirty ? Format.bytes(total) : '剩余 ${Format.bytes(remaining)}',
-                style: ZgltText.caption,
+                style: textTheme.bodySmall,
               ),
             ],
           ),
@@ -312,14 +332,14 @@ class _CurrentPlanCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               '已用 ${Format.bytes(used)} / 总计 ${Format.bytes(total)}',
-              style: ZgltText.caption,
+              style: textTheme.bodySmall,
             ),
           ] else if (dirty) ...[
             const SizedBox(height: 6),
-            const Text('流量总额数据异常，显示可能不准', style: ZgltText.caption),
+            Text('流量总额数据异常，显示可能不准', style: textTheme.bodySmall),
           ] else ...[
             const SizedBox(height: 6),
-            const Text('暂无流量数据', style: ZgltText.caption),
+            Text('暂无流量数据', style: textTheme.bodySmall),
           ],
         ],
       ),
@@ -335,18 +355,20 @@ class _TrafficBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final ratio = (used / total).clamp(0.0, 1.0);
     final color = ratio > 1
-        ? ZgltColors.danger
+        ? extra.danger
         : ratio > 0.8
-        ? ZgltColors.warning
-        : ZgltColors.accent;
+        ? extra.warning
+        : scheme.primary;
     return ClipRRect(
       borderRadius: BorderRadius.circular(3),
       child: LinearProgressIndicator(
         value: ratio,
         minHeight: 6,
-        backgroundColor: ZgltColors.surfaceMuted,
+        backgroundColor: scheme.surfaceContainerHighest,
         valueColor: AlwaysStoppedAnimation<Color>(color),
       ),
     );
@@ -376,49 +398,144 @@ class _PeriodSegment extends StatelessWidget {
 }
 
 /// One sellable plan: name + kind badge + traffic + price for the
-/// selected period. The buy button is disabled — purchase is not built
-/// yet (a plan with no price for the period shows "—").
-class _PlanCard extends StatelessWidget {
+/// selected period. Tapping the card expands it to show the plan detail
+/// (all three period prices, traffic, device limit, speed limit, nodes);
+/// a second tap collapses it. The buy button is disabled — purchase is
+/// not built yet (a plan with no price for the period shows "—").
+/// Missing detail fields show "—", never a made-up value.
+class _PlanCard extends StatefulWidget {
   const _PlanCard({required this.plan, required this.period});
 
   final Plan plan;
   final MembershipPeriod period;
 
   @override
+  State<_PlanCard> createState() => _PlanCardState();
+}
+
+class _PlanCardState extends State<_PlanCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    final price = priceForPeriod(plan, period);
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
+    final plan = widget.plan;
+    final price = priceForPeriod(plan, widget.period);
     final priceText = price == null
         ? '—'
-        : '${formatPrice(price)}/${period.label}';
+        : '${formatPrice(price)}/${widget.period.label}';
     return _Card(
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: InkWell(
+        onTap: () => setState(() => _expanded = !_expanded),
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        plan.name,
-                        style: ZgltText.bodyStrong,
-                        overflow: TextOverflow.ellipsis,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              plan.name,
+                              style: textTheme.titleSmall,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _KindBadge(kind: plan.kind),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    _KindBadge(kind: plan.kind),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        Format.trafficGb(plan.trafficGb),
+                        style: textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        priceText,
+                        style: textTheme.headlineSmall?.copyWith(
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(Format.trafficGb(plan.trafficGb), style: ZgltText.caption),
-                const SizedBox(height: 4),
-                Text(priceText, style: ZgltText.monoLarge),
+                const SizedBox(width: 12),
+                // The app button theme sets minimumSize to
+                // Size.fromHeight(48) (infinite width, for full-width
+                // buttons). Inside this Row that is unbounded, so this
+                // compact button must bound its own minimum width; the
+                // 48 height matches the theme, the 64 width is Flutter's
+                // default button minimum.
+                ElevatedButton(
+                  onPressed: null,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(64, 48),
+                  ),
+                  child: const Text('购买'),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  color: extra.text3,
+                ),
               ],
             ),
+            if (_expanded) ...[
+              const Divider(height: 24),
+              _DetailRow('月价', formatPrice(plan.prices.month)),
+              _DetailRow('季价', formatPrice(plan.prices.quarter)),
+              _DetailRow('年价', formatPrice(plan.prices.year)),
+              _DetailRow('流量', Format.trafficGb(plan.trafficGb)),
+              _DetailRow(
+                '设备数',
+                plan.devices != null && plan.devices!.isNotEmpty
+                    ? plan.devices!
+                    : '—',
+              ),
+              _DetailRow('限速', displaySpeed(plan.speed)),
+              _DetailRow(
+                '节点',
+                plan.nodeIds.isEmpty ? '全部节点' : '包含 ${plan.nodeIds.length} 个节点',
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One detail row in the expanded plan card.
+class _DetailRow extends StatelessWidget {
+  const _DetailRow(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: textTheme.bodySmall),
+          Flexible(
+            child: Text(
+              value,
+              style: textTheme.titleSmall,
+              textAlign: TextAlign.right,
+            ),
           ),
-          const SizedBox(width: 12),
-          const ElevatedButton(onPressed: null, child: Text('购买')),
         ],
       ),
     );
@@ -432,19 +549,22 @@ class _KindBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final extra = Theme.of(context).extension<ZgltExtraColors>()!;
     final label = kind == 'pack' ? '流量包' : '套餐';
     return Container(
       height: 20,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: ZgltColors.accentSoft,
+        color: extra.accentSoft,
         borderRadius: BorderRadius.circular(10),
       ),
       alignment: Alignment.center,
       child: Text(
         label,
-        style: ZgltText.tiny.copyWith(
-          color: ZgltColors.accent,
+        style: textTheme.labelSmall?.copyWith(
+          color: scheme.primary,
           fontWeight: FontWeight.w600,
         ),
       ),
