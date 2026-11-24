@@ -1,10 +1,11 @@
-# Flutter Android — analyze + unit tests + debug APK
+# Flutter Android — analyze + unit tests + debug APK + signed release APK
 #
 # Slice 1 (NORTH Phase 4): scaffold + shared API client + login + home shell.
-# Release signing is NOT wired here: debug APKs only. The release job (with
-# the existing Android keystore Actions secrets) is added with the release
-# build; the keystore itself must never be recreated (see the Android
-# keystore backup note: KEY_PASSWORD must equal the store password).
+# Release signing IS wired here: the build-release job decodes the existing
+# Android release keystore (repo secrets ANDROID_KEYSTORE_BASE64,
+# KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD) to a temp file and builds
+# signed release APKs. The keystore itself must never be recreated (see the
+# Android keystore backup note: KEY_PASSWORD must equal the store password).
 #
 # NOTE on the sing_box plugin (architecture §3.3c): the plugin downloads its
 # prebuilt libbox AAR on first build (SHA-256 verified by the plugin's
@@ -68,5 +69,56 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: zgltvpn-flutter-debug-apks
+          path: flutter/build/app/outputs/flutter-apk/*.apk
+          retention-days: 30
+
+  # Signed release APKs. Runs only after analyze-and-build passes, so a
+  # broken build never ships a release APK. Decodes the existing Android
+  # release keystore (same secrets that sign the SFA Android v0.1 releases)
+  # to a temp file outside the repo; the keystore is never committed.
+  build-release:
+    # Never on pull_request: fork PRs receive no secrets, so the keystore
+    # decode would be empty and the job would silently upload a
+    # debug-signed APK under the "release" name.
+    if: github.event_name != 'pull_request'
+    needs: analyze-and-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: 'stable'
+          cache: true
+          # subosito/flutter-action sets up Java 17 by default for Flutter 3.47.
+
+      - name: Install dependencies
+        working-directory: flutter
+        run: flutter pub get
+
+      - name: Decode release keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "${{ runner.temp }}/release.keystore"
+          # Fail fast if the secret was missing/misspelled: an empty keystore
+          # file would silently fall back to debug signing and upload a
+          # debug-signed APK under the "release" name.
+          test -s "${{ runner.temp }}/release.keystore"
+
+      - name: Build release APKs (split per ABI)
+        working-directory: flutter
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: flutter build apk --release --split-per-abi
+
+      - name: Upload release APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: zgltvpn-flutter-release-apks
           path: flutter/build/app/outputs/flutter-apk/*.apk
           retention-days: 30

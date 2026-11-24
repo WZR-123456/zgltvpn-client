@@ -4,6 +4,20 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Release signing inputs, all from the environment — never hardcoded here.
+// CI sets these from the repo secrets (ANDROID_KEYSTORE_BASE64 decoded to a
+// temp file, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD).
+val releaseKeystorePath = System.getenv("KEYSTORE_PATH")
+val releaseKeystorePassword = System.getenv("KEYSTORE_PASSWORD")
+val releaseKeyAlias = System.getenv("KEY_ALIAS")
+val releaseKeyPassword = System.getenv("KEY_PASSWORD")
+val hasReleaseSigning = listOf(
+    releaseKeystorePath,
+    releaseKeystorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+).all { !it.isNullOrBlank() } && file(releaseKeystorePath!!).exists()
+
 android {
     namespace = "com.zgltvpn.client"
     compileSdk = flutter.compileSdkVersion
@@ -31,11 +45,32 @@ android {
         versionName = flutter.versionName
     }
 
+    // Release signing: the existing Android release keystore (PKCS12, alias
+    // zgltvpn — see the Android keystore backup note; never recreate it).
+    // CI decodes ANDROID_KEYSTORE_BASE64 to a temp file and sets these env
+    // vars. KEY_PASSWORD must equal the store password for this keystore.
+    // When the env vars are absent (local dev without a keystore), the
+    // release build falls back to the debug signing config so
+    // `flutter run --release` keeps working instead of failing.
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseKeystorePath!!)
+                storePassword = releaseKeystorePassword!!
+                keyAlias = releaseKeyAlias!!
+                keyPassword = releaseKeyPassword!!
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                // No keystore configured (local dev): debug keys.
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
