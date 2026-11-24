@@ -1,0 +1,72 @@
+# Flutter Android — analyze + unit tests + debug APK
+#
+# Slice 1 (NORTH Phase 4): scaffold + shared API client + login + home shell.
+# Release signing is NOT wired here: debug APKs only. The release job (with
+# the existing Android keystore Actions secrets) is added with the release
+# build; the keystore itself must never be recreated (see the Android
+# keystore backup note: KEY_PASSWORD must equal the store password).
+#
+# NOTE on the sing_box plugin (architecture §3.3c): the plugin downloads its
+# prebuilt libbox AAR on first build (SHA-256 verified by the plugin's
+# Gradle, cached in ~/.gradle/caches/sing_box/). Self-compiling libbox in
+# our own CI + fork-locking the plugin are deferred to the Phase 2.5
+# prototype, where the VPN core is actually exercised.
+
+name: Flutter Android
+
+on:
+  push:
+    branches: [flutter]
+    paths:
+      - 'flutter/**'
+      - '.github/workflows/flutter-android.yml'
+  pull_request:
+    branches: [flutter]
+    paths:
+      - 'flutter/**'
+  workflow_dispatch:
+
+jobs:
+  analyze-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: 'stable'
+          cache: true
+          # subosito/flutter-action sets up Java 17 by default for Flutter 3.47.
+
+      - name: Show versions
+        run: flutter --version
+
+      - name: Install dependencies
+        working-directory: flutter
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: flutter
+        run: flutter analyze
+
+      - name: Check formatting
+        working-directory: flutter
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Unit tests
+        working-directory: flutter
+        run: flutter test
+
+      - name: Build debug APKs (split per ABI)
+        working-directory: flutter
+        run: flutter build apk --debug --split-per-abi
+
+      - name: Upload debug APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: zgltvpn-flutter-debug-apks
+          path: flutter/build/app/outputs/flutter-apk/*.apk
+          retention-days: 30
